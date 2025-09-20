@@ -1,17 +1,37 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { CORRECT_GIFS, CORRECT_MESSAGES, INCORRECT_GIFS, INCORRECT_MESSAGES } from '../utils/constants';
+import { useCollection } from '../hooks/useCollection';
 
 const AnswerFeedbackModal = ({ isCorrect, onNext }) => {
+    const { data: feedbackData, loading } = useCollection('feedbackContent');
+
+    const feedbackContent = useMemo(() => {
+        if (loading || feedbackData.length === 0) {
+            return {
+                gifUrls: [''],
+                messages: ['Loading...']
+            };
+        }
+        const type = isCorrect ? 'correct' : 'incorrect';
+        const content = feedbackData.find(d => d.id === type);
+        return {
+            gifUrls: content?.gifUrls || [''],
+            messages: content?.messages || ['Default message']
+        };
+    }, [isCorrect, feedbackData, loading]);
+
+
     const gifUrl = useMemo(() => {
-        const gifList = isCorrect ? CORRECT_GIFS : INCORRECT_GIFS;
-        return gifList[Math.floor(Math.random() * gifList.length)];
-    }, [isCorrect]);
+        const { gifUrls } = feedbackContent;
+        if (!gifUrls || gifUrls.length === 0) return '';
+        return gifUrls[Math.floor(Math.random() * gifUrls.length)];
+    }, [feedbackContent]);
 
     const message = useMemo(() => {
-        if (isCorrect) return CORRECT_MESSAGES[Math.floor(Math.random() * CORRECT_MESSAGES.length)];
-        return INCORRECT_MESSAGES[Math.floor(Math.random() * INCORRECT_MESSAGES.length)];
-    }, [isCorrect]);
+        const { messages } = feedbackContent;
+        if (!messages || messages.length === 0) return 'Feedback';
+        return messages[Math.floor(Math.random() * messages.length)];
+    }, [feedbackContent]);
 
     const icon = isCorrect ? 'fa-check' : 'fa-times';
     const iconColor = isCorrect ? 'bg-green-500' : 'bg-red-500';
