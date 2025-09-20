@@ -77,7 +77,11 @@ const ManagementTab = ({ users, courses, tracks }) => {
             const newUser = userCredential.user;
 
             await setDoc(doc(db, "users", newUser.uid), {
-                name: newUserName, email: newUserEmail, isAdmin: newUserIsAdmin, trackIds: []
+                name: newUserName,
+                email: newUserEmail,
+                isAdmin: newUserIsAdmin,
+                trackIds: [],
+                themePreference: 'dark' // Add default theme preference
             });
             await setDoc(doc(db, "activityLogs", newUser.uid), {
                 logins: 0, lastLogin: null, totalTrainingTime: 0,
