@@ -60,7 +60,7 @@ const ManagementTab = ({ users, courses, tracks }) => {
             }, 5000);
             return () => clearTimeout(timer);
         }
-    }, [statusMessage.key]);
+    }, [statusMessage.key, statusMessage.message]);
 
     // --- Handlers for CRUD operations ---
 

@@ -15,7 +15,10 @@ const UserDashboard = ({ user, onStartCourse }) => {
     const [userCourseDataLoading, setUserCourseDataLoading] = useState(true);
 
     useEffect(() => {
-        if (!user) return;
+        if (!user || !user.id) {
+            setUserCourseDataLoading(false);
+            return;
+        };
         const unsub = onSnapshot(collection(db, `users/${user.id}/userCourseData`), (snapshot) => {
             const data = {};
             snapshot.forEach(doc => data[doc.id] = doc.data());
@@ -23,7 +26,7 @@ const UserDashboard = ({ user, onStartCourse }) => {
             setUserCourseDataLoading(false);
         });
         return () => unsub();
-    }, [user.id]);
+    }, [user]);
 
     const { data: activityLogs, loading: activityLogsLoading } = useCollection('activityLogs');
 
