@@ -3,51 +3,50 @@ import PropTypes from 'prop-types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { formatTime } from '../../../utils/helpers';
 
-// FAKE DATA for the chart. In a real application, you would fetch this data from your backend.
-// It should be a time-series of events (e.g., from a dedicated 'events' collection in Firestore).
-const generateFakeChartData = () => {
-    const data = [];
-    const today = new Date();
-    for (let i = 29; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(today.getDate() - i);
-        data.push({
-            date: date.toISOString().split('T')[0], // YYYY-MM-DD
-            logins: Math.floor(Math.random() * 15) + 5,
-            attempts: Math.floor(Math.random() * 25) + 10,
-            prevLogins: Math.floor(Math.random() * 12) + 3,
-            prevAttempts: Math.floor(Math.random() * 20) + 8,
-        });
-    }
-    return data;
+// This function processes real activity logs to prepare them for the chart.
+// It aggregates total logins and attempts by date.
+const processActivityForChart = (logs) => {
+    const dailyData = {};
+    logs.forEach(log => {
+        if (log.lastLogin) {
+            const date = new Date(log.lastLogin).toISOString().split('T')[0];
+            if (!dailyData[date]) {
+                dailyData[date] = { date, logins: 0, attempts: 0 };
+            }
+            dailyData[date].logins += (log.logins || 0);
+            dailyData[date].attempts += (log.attempts || 0);
+        }
+    });
+    return Object.values(dailyData).sort((a, b) => new Date(a.date) - new Date(b.date));
 };
-const FAKE_CHART_DATA = generateFakeChartData();
 
 const aggregateData = (data, period) => {
+    if (!data) return [];
     const aggregated = {};
-    const getPeriodKey = (date) => {
-        const d = new Date(date);
+    const getPeriodKey = (dateStr) => {
+        const d = new Date(dateStr);
+        d.setUTCHours(0,0,0,0); // Normalize to UTC midnight
+
         if (period === 'Daily') return d.toISOString().split('T')[0];
         if (period === 'Weekly') {
-            const first = d.getDate() - d.getDay();
-            const firstDay = new Date(d.setDate(first));
-            return firstDay.toISOString().split('T')[0];
+            const day = d.getUTCDay();
+            const diff = d.getUTCDate() - day + (day === 0 ? -6 : 1); // Adjust to Monday
+            const weekStart = new Date(d.setUTCDate(diff));
+            return weekStart.toISOString().split('T')[0];
         }
         if (period === 'Monthly') {
-            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-01`;
         }
-        return date;
+        return dateStr;
     };
 
     data.forEach(item => {
         const key = getPeriodKey(item.date);
         if (!aggregated[key]) {
-            aggregated[key] = { date: key, logins: 0, attempts: 0, prevLogins: 0, prevAttempts: 0 };
+            aggregated[key] = { date: key, logins: 0, attempts: 0 };
         }
         aggregated[key].logins += item.logins;
         aggregated[key].attempts += item.attempts;
-        aggregated[key].prevLogins += item.prevLogins;
-        aggregated[key].prevAttempts += item.prevAttempts;
     });
 
     return Object.values(aggregated).sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -93,7 +92,10 @@ const UsageStatsTab = ({ users, courses, activityLogs }) => {
         return sortableItems;
     }, [userSortConfig, users, activityLogs]);
     
-    const chartData = useMemo(() => aggregateData(FAKE_CHART_DATA, chartPeriod), [chartPeriod]);
+    const chartData = useMemo(() => {
+        const processedLogs = processActivityForChart(activityLogs);
+        return aggregateData(processedLogs, chartPeriod);
+    }, [activityLogs, chartPeriod]);
 
     const requestUserSort = (key) => {
         let direction = 'ascending';
@@ -162,8 +164,6 @@ const UsageStatsTab = ({ users, courses, activityLogs }) => {
                                 <Legend wrapperStyle={{fontSize: "12px"}}/>
                                 <Line type="monotone" dataKey="logins" name="Logins" stroke="#3b82f6" strokeWidth={2} dot={false}/>
                                 <Line type="monotone" dataKey="attempts" name="Attempts" stroke="#8b5cf6" strokeWidth={2} dot={false}/>
-                                <Line type="monotone" dataKey="prevLogins" name="Prev. Logins" stroke="#3b82f6" strokeOpacity={0.4} strokeDasharray="5 5" dot={false}/>
-                                <Line type="monotone" dataKey="prevAttempts" name="Prev. Attempts" stroke="#8b5cf6" strokeOpacity={0.4} strokeDasharray="5 5" dot={false}/>
                             </LineChart>
                         </ResponsiveContainer>
                    </div>
