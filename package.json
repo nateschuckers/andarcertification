@@ -39,19 +39,3 @@
         ]
     }
 }
-```
-
-### Next Steps
-
-1.  **Update Your `package.json`:** Replace the contents of your local `package.json` file with the updated code above.
-2.  **Push the Change to GitHub:** In your terminal, from your project's root folder, run the following commands to push this update:
-    ```bash
-    git add package.json
-    ```
-    ```bash
-    git commit -m "Fix: Add recharts dependency for charts"
-    ```
-    ```bash
-    git push origin refactor
-    
-
