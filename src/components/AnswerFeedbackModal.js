@@ -63,18 +63,4 @@ AnswerFeedbackModal.propTypes = {
 };
 
 export default AnswerFeedbackModal;
-```
-
-### Next Steps
-
-After you've updated the file with this clean code, please push the change to your `refactor` branch on GitHub.
-
-```bash
-git add src/components/AnswerFeedbackModal.js
-```
-```bash
-git commit -m "Fix: Remove old constants import from FeedbackModal"
-```
-```bash
-git push origin refactor
 
