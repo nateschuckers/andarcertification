@@ -1,0 +1,18 @@
+body { 
+  font-family: 'Inter', sans-serif; 
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.btn-primary { background-color: #3b82f6; }
+.btn-secondary { background-color: #6b7280; }
+.btn-danger { background-color: #ef4444; }
+
+input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:8px;background:#d1d5db;border-radius:5px;outline:none;opacity:.7;transition:opacity .2s}
+input[type="range"]:hover{opacity:1}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:24px;height:24px;background:#2563eb;cursor:pointer;border-radius:50%;border:2px solid #fff;box-shadow:0 0 5px rgba(0,0,0,.2)}
+input[type="range"]::-moz-range-thumb{width:24px;height:24px;background:#2563eb;cursor:pointer;border-radius:50%;border:2px solid #fff;box-shadow:0 0 5px rgba(0,0,0,.2)}
+
+.status-message-enter { opacity: 0; transform: translateY(-10px); }
+.status-message-enter-active { opacity: 1; transform: translateY(0); transition: opacity 300ms, transform 300ms; }
