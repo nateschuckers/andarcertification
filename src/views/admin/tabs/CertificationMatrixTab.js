@@ -40,10 +40,14 @@ const CertificationMatrixTab = ({ users, tracks, courses, allUserCourseData }) =
         });
     }, [users, tracks, allUserCourseData]);
 
-    const atRiskUsers = useMemo(() => { return userStats.filter(u => u.statusPriority < 3).map(user => { const userCourses = allUserCourseData[user.id] || {}; const flaggedCourses = user.assignedTracks.flatMap(track => track.requiredCourses.map(id => ({course: courses.find(c => c.id === id), status: getCourseStatusInfo(userCourses[id])}))).filter(c => c.course && (c.status.color === 'red' || c.status.color === 'yellow')); return { user, flaggedCourses }; }).filter(u => u.flaggedCourses.length > 0); }, [userStats, courses]);
+    const atRiskUsers = useMemo(() => { 
+        return userStats.filter(u => u.statusPriority < 3).map(user => { 
+            const userCourses = allUserCourseData[user.id] || {}; 
+            const flaggedCourses = user.assignedTracks.flatMap(track => track.requiredCourses.map(id => ({course: courses.find(c => c.id === id), status: getCourseStatusInfo(userCourses[id])}))).filter(c => c.course && (c.status.color === 'red' || c.status.color === 'yellow')); 
+            return { user, flaggedCourses }; 
+        }).filter(u => u.flaggedCourses.length > 0); 
+    }, [userStats, courses, allUserCourseData]);
     
-    // NOTE: This calculation assumes that your 'activityLogs' documents have a 'failuresByCourse' map,
-    // e.g., { courseId1: 2, courseId2: 5 }. You will need to update your data collection logic to record this.
     const courseFailures = useMemo(() => {
         const failures = {};
         users.forEach(user => {
