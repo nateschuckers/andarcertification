@@ -41,6 +41,32 @@ const CertificationMatrixTab = ({ users, tracks, courses, allUserCourseData }) =
     }, [users, tracks, allUserCourseData]);
 
     const atRiskUsers = useMemo(() => { return userStats.filter(u => u.statusPriority < 3).map(user => { const userCourses = allUserCourseData[user.id] || {}; const flaggedCourses = user.assignedTracks.flatMap(track => track.requiredCourses.map(id => ({course: courses.find(c => c.id === id), status: getCourseStatusInfo(userCourses[id])}))).filter(c => c.course && (c.status.color === 'red' || c.status.color === 'yellow')); return { user, flaggedCourses }; }).filter(u => u.flaggedCourses.length > 0); }, [userStats, courses]);
+    
+    // NOTE: This calculation assumes that your 'activityLogs' documents have a 'failuresByCourse' map,
+    // e.g., { courseId1: 2, courseId2: 5 }. You will need to update your data collection logic to record this.
+    const courseFailures = useMemo(() => {
+        const failures = {};
+        users.forEach(user => {
+            const userCourseData = allUserCourseData[user.id] || {};
+            Object.entries(userCourseData).forEach(([courseId, data]) => {
+                if (data.failCount && data.failCount > 0) {
+                    if (!failures[courseId]) {
+                        failures[courseId] = {
+                            course: courses.find(c => c.id === courseId),
+                            totalFails: 0,
+                            users: []
+                        };
+                    }
+                    failures[courseId].totalFails += data.failCount;
+                    failures[courseId].users.push({ name: user.name, count: data.failCount });
+                }
+            });
+        });
+        return Object.values(failures)
+            .filter(f => f.course)
+            .sort((a, b) => b.totalFails - a.totalFails);
+    }, [allUserCourseData, users, courses]);
+
     const sortedUsers = useMemo(() => { let sortableItems = [...userStats]; if (sortConfig !== null) { sortableItems.sort((a, b) => { if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'ascending' ? -1 : 1; if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'ascending' ? 1 : -1; return 0; }); } return sortableItems; }, [userStats, sortConfig]);
     const requestSort = (key) => { let direction = 'ascending'; if (sortConfig.key === key && sortConfig.direction === 'ascending') { direction = 'descending'; } setSortConfig({ key, direction }); };
     const getSortIcon = (key) => { if (sortConfig.key !== key) return <i className="fa-solid fa-sort ml-2 text-neutral-400"></i>; if (sortConfig.direction === 'ascending') return <i className="fa-solid fa-sort-up ml-2"></i>; return <i className="fa-solid fa-sort-down ml-2"></i>; };
@@ -111,9 +137,9 @@ const CertificationMatrixTab = ({ users, tracks, courses, allUserCourseData }) =
     const AtRiskUsersPanel = ({ users }) => {
         if (users.length === 0) return null;
         return (
-            <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md dark:shadow-neutral-900 p-4 mb-6">
+            <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md dark:shadow-neutral-900 p-4">
                 <h3 className="font-semibold mb-4 text-yellow-600 dark:text-yellow-400"><i className="fa-solid fa-triangle-exclamation mr-2"></i>Users Needing Attention</h3>
-                <div className="divide-y divide-neutral-200 dark:divide-neutral-700">
+                <div className="divide-y divide-neutral-200 dark:divide-neutral-700 h-48 overflow-y-auto">
                     {users.map(({ user, flaggedCourses }) => (
                         <div key={user.id} className="py-3 flex justify-between items-center">
                             <div>
@@ -135,9 +161,39 @@ const CertificationMatrixTab = ({ users, tracks, courses, allUserCourseData }) =
         );
     };
 
+    const CourseFailuresPanel = ({ failures }) => {
+        if (failures.length === 0) return null;
+        return (
+            <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md dark:shadow-neutral-900 p-4">
+                <h3 className="font-semibold mb-4 text-red-600 dark:text-red-400"><i className="fa-solid fa-bomb mr-2"></i>Top Course Failures</h3>
+                <div className="divide-y divide-neutral-200 dark:divide-neutral-700 h-48 overflow-y-auto">
+                    {failures.map(({ course, totalFails, users }) => (
+                        <div key={course.id} className="py-3">
+                            <div className="flex justify-between items-center">
+                                <p className="font-semibold text-neutral-800 dark:text-white">{course.title}</p>
+                                <p className="font-bold text-red-500">{totalFails} <span className="font-normal text-xs">Total Fails</span></p>
+                            </div>
+                            <ul className="mt-1 space-y-1">
+                                {users.sort((a,b) => b.count - a.count).map((user, index) => (
+                                    <li key={index} className="text-xs text-neutral-500 dark:text-neutral-400 ml-4 flex justify-between">
+                                        <span>{user.name}</span>
+                                        <span>({user.count} fails)</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div>
-            <AtRiskUsersPanel users={atRiskUsers} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <AtRiskUsersPanel users={atRiskUsers} />
+                <CourseFailuresPanel failures={courseFailures} />
+            </div>
             <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md dark:shadow-neutral-900 p-4">
                 <h3 className="font-semibold mb-4 text-neutral-900 dark:text-white">All Users Matrix</h3>
                 <div className="overflow-x-auto">
