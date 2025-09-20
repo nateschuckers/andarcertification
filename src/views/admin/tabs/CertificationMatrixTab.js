@@ -48,6 +48,8 @@ const CertificationMatrixTab = ({ users, tracks, courses, allUserCourseData }) =
         }).filter(u => u.flaggedCourses.length > 0); 
     }, [userStats, courses, allUserCourseData]);
     
+    // NOTE: This calculation assumes that your 'userCourseData' documents have a 'failCount' field.
+    // You will need to update your quiz logic to increment this on each failure.
     const courseFailures = useMemo(() => {
         const failures = {};
         users.forEach(user => {
@@ -139,12 +141,11 @@ const CertificationMatrixTab = ({ users, tracks, courses, allUserCourseData }) =
     };
 
     const AtRiskUsersPanel = ({ users }) => {
-        if (users.length === 0) return null;
         return (
             <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md dark:shadow-neutral-900 p-4">
                 <h3 className="font-semibold mb-4 text-yellow-600 dark:text-yellow-400"><i className="fa-solid fa-triangle-exclamation mr-2"></i>Users Needing Attention</h3>
                 <div className="divide-y divide-neutral-200 dark:divide-neutral-700 h-48 overflow-y-auto">
-                    {users.map(({ user, flaggedCourses }) => (
+                    {users.length > 0 ? users.map(({ user, flaggedCourses }) => (
                         <div key={user.id} className="py-3 flex justify-between items-center">
                             <div>
                                 <p className="font-semibold text-neutral-800 dark:text-white">{user.name}</p>
@@ -159,19 +160,18 @@ const CertificationMatrixTab = ({ users, tracks, courses, allUserCourseData }) =
                             </div>
                             <a href={`mailto:${user.email}`} className="btn-secondary text-white text-xs px-3 py-1 rounded flex items-center"><i className="fa-solid fa-envelope mr-2"></i>Remind</a>
                         </div>
-                    ))}
+                    )) : <p className="text-sm text-neutral-500 dark:text-neutral-400 p-4 text-center">No users currently at risk.</p>}
                 </div>
             </div>
         );
     };
 
     const CourseFailuresPanel = ({ failures }) => {
-        if (failures.length === 0) return null;
         return (
             <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md dark:shadow-neutral-900 p-4">
                 <h3 className="font-semibold mb-4 text-red-600 dark:text-red-400"><i className="fa-solid fa-bomb mr-2"></i>Top Course Failures</h3>
                 <div className="divide-y divide-neutral-200 dark:divide-neutral-700 h-48 overflow-y-auto">
-                    {failures.map(({ course, totalFails, users }) => (
+                    {failures.length > 0 ? failures.map(({ course, totalFails, users }) => (
                         <div key={course.id} className="py-3">
                             <div className="flex justify-between items-center">
                                 <p className="font-semibold text-neutral-800 dark:text-white">{course.title}</p>
@@ -186,7 +186,7 @@ const CertificationMatrixTab = ({ users, tracks, courses, allUserCourseData }) =
                                 ))}
                             </ul>
                         </div>
-                    ))}
+                    )) : <p className="text-sm text-neutral-500 dark:text-neutral-400 p-4 text-center">No course failures recorded.</p>}
                 </div>
             </div>
         );
