@@ -9,7 +9,7 @@ import CompletionScreen from '../../components/CompletionScreen';
 
 const PASS_RATE = 0.8; // 80%
 
-const QuestionView = ({ course, user, onBack, trackIcon }) => { // Accept trackIcon prop
+const QuestionView = ({ course, user, onBack, trackIcon }) => { 
     const [questions, setQuestions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [quizQuestions, setQuizQuestions] = useState([]);
@@ -43,6 +43,26 @@ const QuestionView = ({ course, user, onBack, trackIcon }) => { // Accept trackI
         setQuizStartTime(Date.now());
 
     }, [questions, course.quizLength]);
+    
+    // FIX: Extracted recordAttempt into its own reusable useCallback
+    const recordAttempt = useCallback(async () => {
+        const userCourseRef = doc(db, `users/${user.id}/userCourseData`, course.id);
+        const activityLogRef = doc(db, 'activityLogs', user.id);
+        try {
+            await runTransaction(db, async (transaction) => {
+                const activityLogDoc = await transaction.get(activityLogRef);
+                const userCourseDoc = await transaction.get(userCourseRef);
+                
+                const newAttempts = (activityLogDoc.data()?.attempts || 0) + 1;
+                transaction.set(activityLogRef, { attempts: newAttempts }, { merge: true });
+
+                const newAttemptCount = (userCourseDoc.data()?.attemptCount || 0) + 1;
+                transaction.set(userCourseRef, { attemptCount: newAttemptCount }, { merge: true });
+            });
+        } catch (e) {
+            console.error("Transaction failed during attempt recording: ", e);
+        }
+    }, [user.id, course.id]);
 
     useEffect(() => {
         const q = collection(db, `courses/${course.id}/questions`);
@@ -58,31 +78,13 @@ const QuestionView = ({ course, user, onBack, trackIcon }) => { // Accept trackI
         return () => unsub();
     }, [course.id]);
     
+    // FIX: Updated useEffect to use the new reusable recordAttempt function
     useEffect(() => {
         if (questions.length > 0) {
             resetQuiz();
-
-            const recordAttempt = async () => {
-                const userCourseRef = doc(db, `users/${user.id}/userCourseData`, course.id);
-                const activityLogRef = doc(db, 'activityLogs', user.id);
-                try {
-                    await runTransaction(db, async (transaction) => {
-                        const activityLogDoc = await transaction.get(activityLogRef);
-                        const userCourseDoc = await transaction.get(userCourseRef);
-                        
-                        const newAttempts = (activityLogDoc.data()?.attempts || 0) + 1;
-                        transaction.set(activityLogRef, { attempts: newAttempts }, { merge: true });
-
-                        const newAttemptCount = (userCourseDoc.data()?.attemptCount || 0) + 1;
-                        transaction.set(userCourseRef, { attemptCount: newAttemptCount }, { merge: true });
-                    });
-                } catch (e) {
-                    console.error("Transaction failed during attempt recording: ", e);
-                }
-            };
             recordAttempt();
         }
-    }, [questions, course.id, user.id, resetQuiz]);
+    }, [questions, resetQuiz, recordAttempt]);
 
     useEffect(() => {
         window.history.pushState(null, '');
@@ -94,6 +96,12 @@ const QuestionView = ({ course, user, onBack, trackIcon }) => { // Accept trackI
         window.addEventListener('popstate', handlePopState);
         return () => window.removeEventListener('popstate', handlePopState);
     }, [showCompletionScreen]);
+    
+    // FIX: New handler for the retry button
+    const handleRetry = () => {
+        recordAttempt();
+        resetQuiz();
+    };
 
     const handleBackButtonClick = () => setShowExitConfirm(true);
     const handleConfirmExit = () => { hasConfirmedExit.current = true; onBack(); };
@@ -147,7 +155,8 @@ const QuestionView = ({ course, user, onBack, trackIcon }) => { // Accept trackI
     };
     
     if (loading) return <div className="p-8 text-center text-neutral-800 dark:text-white">Loading Questions...</div>;
-    if (showCompletionScreen) return <CompletionScreen score={finalScore} totalQuestions={quizQuestions.length} onBack={onBack} onRetry={resetQuiz} />;
+    // FIX: Pass the new handleRetry function to the CompletionScreen
+    if (showCompletionScreen) return <CompletionScreen score={finalScore} totalQuestions={quizQuestions.length} onBack={onBack} onRetry={handleRetry} />;
     if (quizQuestions.length === 0) return <div className="p-8 text-center"><h2 className="text-xl text-neutral-800 dark:text-white">This course has no questions yet.</h2><button onClick={onBack} className="mt-4 btn-secondary text-white font-bold py-2 px-4 rounded">Back to Courses</button></div>;
     if (!currentQuestion) return null;
 
