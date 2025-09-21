@@ -34,7 +34,7 @@ exports.generateQuestions = functions.https.onCall(async (data, context) => {
         const client = await auth.getClient();
         const projectId = await auth.getProjectId();
         const location = "us-central1"; // Or your preferred location
-        const model = "gemini-1.0-pro";
+        const model = "gemini-1.5-flash-preview-0514"; // Updated model
 
         const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`;
         
@@ -62,4 +62,26 @@ exports.generateQuestions = functions.https.onCall(async (data, context) => {
         throw new HttpsError("internal", "Failed to generate questions from the AI model.", { details: error.message });
     }
 });
+```
+
+### Next Steps: The Final Configuration
+
+After updating the file, you need to perform the one-time permission update.
+
+1.  **Go to the Google Cloud IAM page** for your project: [https://console.cloud.google.com/iam-admin/iam](https://console.cloud.google.com/iam-admin/iam). Make sure your `certification2-2bacd` project is selected at the top.
+
+2.  **Find the Service Account:** In the list of "Principals," find the one that ends with `@appspot.gserviceaccount.com`.
+
+3.  **Add the "Vertex AI User" Role:**
+    * Click the **pencil icon** (Edit principal) next to that service account.
+    * Click **"Add another role"**.
+    * In the "Select a role" filter box, type **`Vertex AI User`** and select it from the list.
+    * Click **"Save"**.
+
+
+
+4.  **Redeploy Your Function:** Finally, go to your terminal, navigate to the **root directory** of your project, and run the deploy command one last time:
+    ```bash
+    firebase deploy --only functions
+    
 
