@@ -93,9 +93,10 @@ const CompletionScreen = ({ score, totalQuestions, onBack, onRetry }) => {
     const passMessages = ["Congratulations!", "Excellent Work!", "You're a Certified Pro!", "Outstanding Performance!"];
     const failMessages = ["So Close!", "Don't Give Up!", "Almost There!", "Give It Another Go!"];
 
-    const title = hasPassed 
-        ? passMessages[Math.floor(Math.random() * passMessages.length)]
-        : failMessages[Math.floor(Math.random() * failMessages.length)];
+    const [title] = React.useState(() => {
+        const messages = hasPassed ? passMessages : failMessages;
+        return messages[Math.floor(Math.random() * messages.length)];
+    });
     
     const subtitle = hasPassed
         ? "You have successfully passed the course."
