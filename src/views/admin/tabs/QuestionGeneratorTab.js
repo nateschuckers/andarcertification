@@ -96,7 +96,7 @@ const QuestionGeneratorTab = () => {
             
             const payload = { contents: [{ parts: [{ text: prompt }] }] };
             // FIX: Hardcoded a stable, widely available model
-            const model = "gemini-1.5-flash-preview-0514";
+            const model = "gemini-2.0-flash:generateContent";
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
             
             const response = await fetch(apiUrl, {
@@ -342,4 +342,5 @@ QuestionPreview.propTypes = {
 };
 
 export default QuestionGeneratorTab;
+
 
