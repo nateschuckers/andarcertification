@@ -5,18 +5,69 @@ const OnboardingModal = ({ user, onClose }) => {
     const [step, setStep] = useState(0);
 
     const userSlides = [
-        { icon: 'fa-rocket', title: 'Welcome to Your Dashboard!', text: 'This is your central hub for all certification courses. Let\'s quickly go over the key features.' },
-        { icon: 'fa-tasks', title: 'Your Courses & Paths', text: 'Your assigned courses are organized into Certification Paths. Your goal is to complete all required courses in a path to earn the certification.' },
-        { icon: 'fa-check-double', title: 'Taking Quizzes', text: 'To complete a course, you must pass a quiz. The questions and the order of answers are randomized each time to keep you on your toes!' },
-        { icon: 'fa-chart-pie', title: 'Track Your Progress', text: 'On the right side of your dashboard, you can view your total training time, earned achievements, and your rank on the company leaderboard. Good luck!' }
+        {
+            icon: 'fa-rocket',
+            title: 'Welcome to Your Dashboard!',
+            text: 'This is your central hub for all certification courses. Let\'s quickly go over the key features.'
+        },
+        {
+            icon: 'fa-tasks',
+            title: 'Your Courses & Paths',
+            text: 'Your assigned courses are organized into Certification Paths. Your goal is to complete all required courses in a path to earn the certification.'
+        },
+        {
+            icon: 'fa-check-double',
+            title: 'Taking Quizzes',
+            text: 'To complete a course, you must pass a quiz. The questions and the order of answers are randomized each time to keep you on your toes!'
+        },
+        {
+            icon: 'fa-chart-pie',
+            title: 'Track Your Progress',
+            text: 'On the right side of your dashboard, you can view your total training time, earned achievements, and your rank on the company leaderboard. Good luck!'
+        },
+        {
+            icon: 'fa-circle-question',
+            title: 'Need a Refresher?',
+            text: "You can view this tour again at any time by clicking on your profile icon in the top-right corner and selecting 'Show Tour'."
+        }
     ];
 
     const adminSlides = [
-        { icon: 'fa-shield-halved', title: 'Welcome, Admin!', text: 'This is your Admin Dashboard, the command center for managing the certification program.' },
-        { icon: 'fa-table-list', title: 'Certification Matrix', text: 'Get a powerful, at-a-glance view of every user\'s progress, completion percentages, and overall status. Identify users who need attention quickly.' },
-        { icon: 'fa-chart-line', title: 'Usage Statistics', text: 'Dive into the data. Analyze login activity, course attempt rates, and identify trends in pass/fail rates for courses and even individual questions.' },
-        { icon: 'fa-users-cog', title: 'Management Tools', text: 'Easily create new user profiles, manage courses, and mass-assign or remove courses and entire certification paths for single or multiple users.' },
-        { icon: 'fa-magic-wand-sparkles', title: 'AI Question Generator', text: 'Save time by using the AI-powered generator to create new quiz questions from your PDF documents or website URLs.' }
+        {
+            icon: 'fa-shield-halved',
+            title: 'Welcome, Admin!',
+            text: 'This is your Admin Dashboard, the command center for the certification program. As an admin, you have access to all user features plus the powerful tools we will cover now.'
+        },
+        {
+            icon: 'fa-users-viewfinder',
+            title: 'User Dashboard',
+            text: 'First, you can switch to your personal User Dashboard at any time from the profile menu to see your own assigned courses and progress, just like any other user.'
+        },
+        {
+            icon: 'fa-table-list',
+            title: 'Certification Matrix',
+            text: 'Get a powerful, at-a-glance view of every user\'s progress, completion percentages, and overall status. Identify users who need attention quickly.'
+        },
+        {
+            icon: 'fa-chart-line',
+            title: 'Usage Statistics',
+            text: 'Dive into the data. Analyze login activity, course attempt rates, and identify trends in pass/fail rates for courses and even individual questions.'
+        },
+        {
+            icon: 'fa-users-cog',
+            title: 'Management Tools',
+            text: 'Easily create new user profiles, manage courses and paths, and mass-assign or remove training for individuals or groups.'
+        },
+        {
+            icon: 'fa-magic-wand-sparkles',
+            title: 'AI Question Generator',
+            text: 'Save time by using the AI-powered generator to create new quiz questions from your PDF documents.'
+        },
+        {
+            icon: 'fa-circle-question',
+            title: 'Need a Refresher?',
+            text: "You can view this tour again at any time by clicking on your profile icon in the top-right corner and selecting 'Show Tour'."
+        }
     ];
 
     const slides = user.isAdmin ? adminSlides : userSlides;
@@ -64,7 +115,8 @@ const OnboardingModal = ({ user, onClose }) => {
 
 OnboardingModal.propTypes = {
     user: PropTypes.object.isRequired,
-    onClose: PropTypes.func.isRequired,
+    onClose: PropTypes.func.isRequired
 };
 
 export default OnboardingModal;
+
