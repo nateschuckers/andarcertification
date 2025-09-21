@@ -44,7 +44,7 @@ const QuestionView = ({ course, user, onBack, trackIcon }) => {
 
     }, [questions, course.quizLength]);
     
-    // FIX: Extracted recordAttempt into its own reusable useCallback
+    // As per your suggestion, recordAttempt is now a reusable useCallback
     const recordAttempt = useCallback(async () => {
         const userCourseRef = doc(db, `users/${user.id}/userCourseData`, course.id);
         const activityLogRef = doc(db, 'activityLogs', user.id);
@@ -78,13 +78,13 @@ const QuestionView = ({ course, user, onBack, trackIcon }) => {
         return () => unsub();
     }, [course.id]);
     
-    // FIX: Updated useEffect to use the new reusable recordAttempt function
+    // Updated useEffect to use the new reusable recordAttempt function
     useEffect(() => {
-        if (questions.length > 0) {
+        if (questions.length > 0 && user.id && course.id) {
             resetQuiz();
             recordAttempt();
         }
-    }, [questions, resetQuiz, recordAttempt]);
+    }, [questions, resetQuiz, recordAttempt, user.id, course.id]);
 
     useEffect(() => {
         window.history.pushState(null, '');
@@ -97,7 +97,7 @@ const QuestionView = ({ course, user, onBack, trackIcon }) => {
         return () => window.removeEventListener('popstate', handlePopState);
     }, [showCompletionScreen]);
     
-    // FIX: New handler for the retry button
+    // New handler for the retry button that calls both functions
     const handleRetry = () => {
         recordAttempt();
         resetQuiz();
@@ -155,7 +155,7 @@ const QuestionView = ({ course, user, onBack, trackIcon }) => {
     };
     
     if (loading) return <div className="p-8 text-center text-neutral-800 dark:text-white">Loading Questions...</div>;
-    // FIX: Pass the new handleRetry function to the CompletionScreen
+    // Pass the new handleRetry function to the CompletionScreen
     if (showCompletionScreen) return <CompletionScreen score={finalScore} totalQuestions={quizQuestions.length} onBack={onBack} onRetry={handleRetry} />;
     if (quizQuestions.length === 0) return <div className="p-8 text-center"><h2 className="text-xl text-neutral-800 dark:text-white">This course has no questions yet.</h2><button onClick={onBack} className="mt-4 btn-secondary text-white font-bold py-2 px-4 rounded">Back to Courses</button></div>;
     if (!currentQuestion) return null;
