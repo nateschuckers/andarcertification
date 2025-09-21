@@ -95,7 +95,7 @@ const UserDashboard = ({ user, onStartCourse }) => {
                                             <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${track.completionPercent}%` }}></div>
                                         </div>
                                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                            {track.courses.map(course => <CourseCard key={course.id} course={course} courseData={userCourseData[course.id]} onStartCourse={onStartCourse} trackIcon={track.icon} />)}
+                                            {track.courses.map(course => <CourseCard key={course.id} course={course} courseData={userCourseData[course.id]} onStartCourse={() => onStartCourse(course.id, track.icon)} trackIcon={track.icon} />)}
                                         </div>
                                     </div>
                                 ))}
@@ -109,7 +109,7 @@ const UserDashboard = ({ user, onStartCourse }) => {
                         <div> 
                             <h3 className="text-xl font-semibold mb-4 text-neutral-900 dark:text-white">Optional Courses</h3> 
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                {optionalCourses.map(course => <CourseCard key={course.id} course={course} courseData={userCourseData[course.id]} onStartCourse={onStartCourse} />)}
+                                {optionalCourses.map(course => <CourseCard key={course.id} course={course} courseData={userCourseData[course.id]} onStartCourse={() => onStartCourse(course.id, null)} />)}
                             </div> 
                         </div>
                     )}

@@ -16,7 +16,8 @@ function App() {
     const { userData, loading: authLoading } = useAuth();
     const [currentView, setCurrentView] = useState('dashboard');
     const [takingCourseId, setTakingCourseId] = useState(null);
-    const [theme, toggleTheme] = useTheme(userData); // Pass userData to the hook
+    const [takingCourseIcon, setTakingCourseIcon] = useState(null); // New state for the icon
+    const [theme, toggleTheme] = useTheme(userData);
     const [showOnboarding, setShowOnboarding] = useState(false);
     const { data: courses, loading: coursesLoading } = useCollection('courses', {
         skip: !userData
@@ -31,9 +32,16 @@ function App() {
         }
     }, [userData, authLoading]);
     
-    // The toggleTheme function now comes directly from the hook
-    const handleStartCourse = (courseId) => setTakingCourseId(courseId);
-    const handleExitCourse = () => setTakingCourseId(null);
+    // Updated handler to accept the icon
+    const handleStartCourse = (courseId, icon) => {
+        setTakingCourseId(courseId);
+        setTakingCourseIcon(icon);
+    };
+
+    const handleExitCourse = () => {
+        setTakingCourseId(null);
+        setTakingCourseIcon(null);
+    };
     
     const handleLogout = async () => {
         handleExitCourse();
@@ -74,7 +82,8 @@ function App() {
 
     const renderMainContent = () => {
         if (courseBeingTaken) {
-            return <QuestionView course={courseBeingTaken} user={userData} onBack={handleExitCourse} />;
+            // Pass the icon down to the QuestionView
+            return <QuestionView course={courseBeingTaken} user={userData} onBack={handleExitCourse} trackIcon={takingCourseIcon} />;
         }
         if (userData.isAdmin && currentView === 'admin') {
             return <AdminDashboard />;

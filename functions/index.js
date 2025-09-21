@@ -81,6 +81,5 @@ exports.generateQuestions = functions.runWith({ timeoutSeconds: 300 }).https.onC
         });
         throw new HttpsError("internal", "Failed to generate questions from the AI model.", { details: error.message });
     }
-}
-
+});
 
