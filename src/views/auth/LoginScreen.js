@@ -1,125 +1,225 @@
-import React, { useState } from 'react';
-import { 
-    signInWithEmailAndPassword, 
-    createUserWithEmailAndPassword, 
-    sendPasswordResetEmail 
-} from "firebase/auth";
-import { setDoc, doc } from "firebase/firestore";
-import { auth, db } from '../../firebase/config';
+import React, { useState, useMemo } from 'react';
+import PropTypes from 'prop-types';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { formatTime } from '../../../utils/helpers';
 
-const LoginScreen = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [isRegister, setIsRegister] = useState(false);
-    const [name, setName] = useState(''); // For registration
-    const [message, setMessage] = useState('');
-
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-        setMessage('');
-        try {
-            await signInWithEmailAndPassword(auth, email, password);
-        } catch (err) {
-            setError(err.message);
+// This function now correctly processes Firestore Timestamps from the activity logs.
+const processActivityForChart = (logs) => {
+    const dailyData = {};
+    logs.forEach(log => {
+        // FIX: Check if lastLogin exists and is a Firestore Timestamp object
+        if (log.lastLogin && typeof log.lastLogin.toDate === 'function') {
+            const date = log.lastLogin.toDate().toISOString().split('T')[0]; // Convert to JS Date, then format
+            if (!dailyData[date]) {
+                dailyData[date] = { date, logins: 0, attempts: 0 };
+            }
+            // Aggregate logins and attempts for that day
+            dailyData[date].logins += (log.logins || 0);
+            dailyData[date].attempts += (log.attempts || 0);
         }
-        setLoading(false);
+    });
+    return Object.values(dailyData).sort((a, b) => new Date(a.date) - new Date(b.date));
+};
+
+const aggregateData = (data, period) => {
+    if (!data) return [];
+    const aggregated = {};
+    const getPeriodKey = (dateStr) => {
+        const d = new Date(dateStr);
+        d.setUTCHours(0,0,0,0); // Normalize to UTC midnight
+
+        if (period === 'Daily') return d.toISOString().split('T')[0];
+        if (period === 'Weekly') {
+            const day = d.getUTCDay();
+            const diff = d.getUTCDate() - day + (day === 0 ? -6 : 1); // Adjust to Monday
+            const weekStart = new Date(d.setUTCDate(diff));
+            return weekStart.toISOString().split('T')[0];
+        }
+        if (period === 'Monthly') {
+            return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-01`;
+        }
+        return dateStr;
     };
 
-    const handleRegister = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-        setMessage('');
-        try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
-            // Create user profile in Firestore
-            await setDoc(doc(db, "users", user.uid), {
-                name: name,
-                email: user.email,
-                isAdmin: false, // Default to not admin
-                trackIds: []
-            });
-             await setDoc(doc(db, "activityLogs", user.uid), {
-                logins: 1,
-                lastLogin: new Date().toISOString(),
-                totalTrainingTime: 0,
-                attempts: 0, passes: 0, fails: 0, passRate: 0
-            });
-        } catch (err) {
-            setError(err.message);
+    data.forEach(item => {
+        const key = getPeriodKey(item.date);
+        if (!aggregated[key]) {
+            aggregated[key] = { date: key, logins: 0, attempts: 0 };
         }
-        setLoading(false);
-    };
+        aggregated[key].logins += item.logins;
+        aggregated[key].attempts += item.attempts;
+    });
+
+    return Object.values(aggregated).sort((a, b) => new Date(a.date) - new Date(b.date));
+};
+
+
+const UsageStatsTab = ({ users, courses, activityLogs }) => {
+    const [timeMetric, setTimeMetric] = useState('total');
+    const [userSortConfig, setUserSortConfig] = useState({ key: 'name', direction: 'ascending' });
+    const [chartPeriod, setChartPeriod] = useState('Daily');
+
+    const stats = useMemo(() => {
+        const totalTrainingTime = activityLogs.reduce((sum, u) => sum + (u.totalTrainingTime || 0), 0);
+        const totalAttempts = activityLogs.reduce((sum, u) => sum + (u.attempts || 0), 0);
+        return {
+            totalTrainingTime,
+            avgTrainingTime: activityLogs.length > 0 ? totalTrainingTime / activityLogs.length : 0,
+            totalAttempts,
+            totalPasses: activityLogs.reduce((sum, u) => sum + (u.passes || 0), 0),
+            totalFails: activityLogs.reduce((sum, u) => sum + (u.fails || 0), 0),
+        };
+    }, [activityLogs]);
+
+    const topUsers = useMemo(() => {
+        return users
+            .map(u => ({ ...u, ...activityLogs.find(log => log.id === u.id)}))
+            .sort((a, b) => (b.totalTrainingTime || 0) - (a.totalTrainingTime || 0))
+            .slice(0, 3);
+    }, [users, activityLogs]);
     
-    const handlePasswordReset = async () => {
-        if (!email) {
-            setError("Please enter your email to reset password.");
-            return;
+    const sortedUserActivity = useMemo(() => {
+        const activityData = users.map(u => ({ ...u, ...activityLogs.find(log => log.id === u.id) }));
+        let sortableItems = [...activityData];
+        if (userSortConfig !== null) {
+            sortableItems.sort((a, b) => {
+                const valA = a[userSortConfig.key] || 0;
+                const valB = b[userSortConfig.key] || 0;
+                if (valA < valB) return userSortConfig.direction === 'ascending' ? -1 : 1;
+                if (valA > valB) return userSortConfig.direction === 'ascending' ? 1 : -1;
+                return 0;
+            });
         }
-        setLoading(true);
-        setError('');
-        setMessage('');
-        try {
-            await sendPasswordResetEmail(auth, email);
-            setMessage("Password reset email sent! Check your inbox.");
-        } catch (err) {
-            setError(err.message);
-        }
-        setLoading(false);
-    }
+        return sortableItems;
+    }, [userSortConfig, users, activityLogs]);
+    
+    const chartData = useMemo(() => {
+        const processedLogs = processActivityForChart(activityLogs);
+        return aggregateData(processedLogs, chartPeriod);
+    }, [activityLogs, chartPeriod]);
 
-    const inputClasses = "w-full mt-1 bg-neutral-100 dark:bg-neutral-700 p-2 rounded border border-neutral-300 dark:border-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-neutral-100";
+    const requestUserSort = (key) => {
+        let direction = 'ascending';
+        if (userSortConfig.key === key && userSortConfig.direction === 'ascending') {
+            direction = 'descending';
+        }
+        setUserSortConfig({ key, direction });
+    };
+    const getSortIcon = (key) => {
+        if (userSortConfig.key !== key) return <i className="fa-solid fa-sort ml-2 text-neutral-400"></i>;
+        if (userSortConfig.direction === 'ascending') return <i className="fa-solid fa-sort-up ml-2"></i>;
+        return <i className="fa-solid fa-sort-down ml-2"></i>;
+    };
+
+    const MetricCard = ({ title, value, children }) => ( 
+        <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md dark:shadow-neutral-900 p-4">
+            <div className="flex justify-between items-start">
+                <h4 className="text-sm text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{title}</h4>
+                {children}
+            </div>
+            <p className="text-3xl font-bold text-neutral-900 dark:text-white mt-2">{value}</p>
+        </div> 
+    );
+    
+    const ChartPeriodToggle = ({ selected, onChange }) => (
+        <div className="flex space-x-1 bg-neutral-200 dark:bg-neutral-700 p-1 rounded-md">
+            {['Daily', 'Weekly', 'Monthly'].map(period => (
+                <button 
+                    key={period} 
+                    onClick={() => onChange(period)} 
+                    className={`px-3 py-1 text-xs rounded-md ${selected === period ? 'bg-white dark:bg-neutral-600 shadow font-semibold' : 'text-neutral-500 dark:text-neutral-400'}`}
+                >
+                    {period}
+                </button>
+            ))}
+        </div>
+    );
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-neutral-100 dark:bg-neutral-900">
-            <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md dark:shadow-neutral-900 p-8 w-full max-w-sm">
-                <div className="flex justify-center mb-6">
-                     <img src="assets/logo-light.png" alt="Company Logo" className="h-10 dark:hidden" />
-                     <img src="assets/logo-dark.png" alt="Company Logo Dark" className="h-10 hidden dark:block" />
-                </div>
-                <h2 className="text-2xl font-bold text-center mb-6 text-neutral-900 dark:text-white">Certification Platform</h2>
-                <form onSubmit={isRegister ? handleRegister : handleLogin}>
-                    <div className="space-y-4">
-                        {isRegister && (
-                             <div>
-                                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Full Name</label>
-                                <input type="text" value={name} onChange={e => setName(e.target.value)} required className={inputClasses} />
-                            </div>
-                        )}
-                        <div>
-                            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Email Address</label>
-                            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required className={inputClasses} />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Password</label>
-                            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className={inputClasses} />
-                        </div>
-                        <button type="submit" disabled={loading} className="w-full btn-primary text-white font-bold py-2 px-4 rounded disabled:bg-neutral-400">
-                            {loading ? 'Loading...' : (isRegister ? 'Register' : 'Login')}
-                        </button>
+        <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <MetricCard title="Training Time" value={formatTime(timeMetric === 'total' ? stats.totalTrainingTime : stats.avgTrainingTime)}>
+                    <div className="flex space-x-1 bg-neutral-200 dark:bg-neutral-700 p-1 rounded-md">
+                        <button onClick={() => setTimeMetric('total')} className={`px-2 py-1 text-xs rounded ${timeMetric === 'total' ? 'bg-white dark:bg-neutral-600 shadow' : 'text-neutral-500 dark:text-neutral-400'}`}>Total</button>
+                        <button onClick={() => setTimeMetric('avg')} className={`px-2 py-1 text-xs rounded ${timeMetric === 'avg' ? 'bg-white dark:bg-neutral-600 shadow' : 'text-neutral-500 dark:text-neutral-400'}`}>Avg</button>
                     </div>
-                </form>
-                {error && <p className="mt-4 text-center text-red-500 text-sm">{error}</p>}
-                {message && <p className="mt-4 text-center text-green-500 text-sm">{message}</p>}
-                <div className="mt-4 text-center text-sm">
-                    <button onClick={() => setIsRegister(!isRegister)} className="text-blue-600 hover:underline">
-                        {isRegister ? 'Already have an account? Login' : 'Need an account? Register'}
-                    </button>
+                </MetricCard>
+                <MetricCard title="Total Attempts" value={stats.totalAttempts} />
+                <MetricCard title="Total Passes" value={stats.totalPasses} />
+                <MetricCard title="Total Fails" value={stats.totalFails} />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <div className="lg:col-span-2 bg-white dark:bg-neutral-800 rounded-lg shadow-md dark:shadow-neutral-900 p-4">
+                   <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-semibold text-neutral-900 dark:text-white">Activity</h3>
+                        <ChartPeriodToggle selected={chartPeriod} onChange={setChartPeriod} />
+                   </div>
+                   <div style={{ width: '100%', height: 260 }}>
+                        <ResponsiveContainer>
+                            <LineChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2}/>
+                                <XAxis dataKey="date" fontSize={12} tickLine={false} axisLine={false} />
+                                <YAxis fontSize={12} tickLine={false} axisLine={false}/>
+                                <Tooltip contentStyle={{ backgroundColor: 'rgba(38, 38, 38, 0.8)', border: 'none', borderRadius: '0.5rem' }} labelStyle={{ color: '#fafafa' }}/>
+                                <Legend wrapperStyle={{fontSize: "12px"}}/>
+                                <Line type="monotone" dataKey="logins" name="Logins" stroke="#3b82f6" strokeWidth={2} dot={false}/>
+                                <Line type="monotone" dataKey="attempts" name="Attempts" stroke="#8b5cf6" strokeWidth={2} dot={false}/>
+                            </LineChart>
+                        </ResponsiveContainer>
+                   </div>
                 </div>
-                 <div className="mt-2 text-center text-sm">
-                    <button onClick={handlePasswordReset} className="text-neutral-500 hover:underline">
-                        Forgot Password?
-                    </button>
+                <div className="space-y-6">
+                   <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md dark:shadow-neutral-900 p-4">
+                        <h3 className="font-semibold text-neutral-900 dark:text-white mb-4">Top Users by Time</h3>
+                        <ul className="space-y-3">
+                            {topUsers.map((user, i) => (
+                                <li key={user.id} className="flex justify-between items-center text-sm">
+                                    <span className="text-neutral-800 dark:text-neutral-200">{i+1}. {user.name}</span>
+                                    <span className="font-mono text-neutral-500 dark:text-neutral-400">{formatTime(user.totalTrainingTime || 0)}</span>
+                                </li>
+                            ))}
+                        </ul>
+                   </div>
+                </div>
+            </div>
+
+            <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md dark:shadow-neutral-900 p-4">
+                <h3 className="font-semibold mb-4 text-neutral-900 dark:text-white">All User Activity</h3>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left"><thead className="bg-neutral-100 dark:bg-neutral-800"><tr className="text-neutral-600 dark:text-neutral-400">
+                        {[{key: 'name', label: 'Employee'}, {key: 'logins', label: 'Logins'}, {key: 'lastLogin', label: 'Last Login'}, {key: 'attempts', label: 'Attempts'}, {key: 'passes', label: 'Passes'}, {key: 'fails', label: 'Fails'}, {key: 'passRate', label: 'Pass Rate'}, {key: 'totalTrainingTime', label: 'Total Training Time'}].map(h => (
+                            <th key={h.key} className="p-3 font-semibold tracking-wider cursor-pointer" onClick={() => requestUserSort(h.key)}>{h.label} {getSortIcon(h.key)}</th>
+                        ))}
+                        <th className="p-3 font-semibold tracking-wider">Avg. Training Time</th>
+                    </tr></thead><tbody className="divide-y divide-neutral-200 dark:divide-neutral-700">{sortedUserActivity.map(user => {
+                        const avgTime = (user.attempts || 0) > 0 ? (user.totalTrainingTime || 0) / user.attempts : 0;
+                        const lastLoginDate = user.lastLogin && typeof user.lastLogin.toDate === 'function' ? user.lastLogin.toDate().toLocaleDateString() : 'Never';
+                        return (
+                            <tr key={user.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-700/50">
+                                <td className="p-3 font-semibold text-neutral-800 dark:text-white">{user.name}</td>
+                                <td className="p-3 text-neutral-600 dark:text-neutral-300">{user.logins || 0}</td>
+                                <td className="p-3 text-neutral-600 dark:text-neutral-300">{lastLoginDate}</td>
+                                <td className="p-3 text-neutral-600 dark:text-neutral-300">{user.attempts || 0}</td>
+                                <td className="p-3 text-neutral-600 dark:text-neutral-300">{user.passes || 0}</td>
+                                <td className="p-3 text-neutral-600 dark:text-neutral-300">{user.fails || 0}</td>
+                                <td className="p-3 text-neutral-600 dark:text-neutral-300">{`${user.passRate || 0}%`}</td>
+                                <td className="p-3 font-mono text-neutral-600 dark:text-neutral-300">{formatTime(user.totalTrainingTime || 0)}</td>
+                                <td className="p-3 font-mono text-neutral-600 dark:text-neutral-300">{formatTime(avgTime)}</td>
+                            </tr>
+                        );
+                    })}</tbody></table>
                 </div>
             </div>
         </div>
     );
 };
 
-export default LoginScreen;
+UsageStatsTab.propTypes = {
+    users: PropTypes.array.isRequired,
+    courses: PropTypes.array.isRequired,
+    activityLogs: PropTypes.array.isRequired,
+};
+
+export default UsageStatsTab;
 
