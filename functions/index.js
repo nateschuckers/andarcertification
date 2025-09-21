@@ -81,13 +81,6 @@ exports.generateQuestions = functions.runWith({ timeoutSeconds: 300 }).https.onC
         });
         throw new HttpsError("internal", "Failed to generate questions from the AI model.", { details: error.message });
     }
-});
-```
+}
 
-### Next Steps: The Final Debugging Push
-
-1.  **Redeploy the Function:** After updating the file, go to your terminal, navigate to the **root directory** of your project, and run the deploy command:
-    ```bash
-    firebase deploy --only functions
-    
 
