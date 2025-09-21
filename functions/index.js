@@ -63,16 +63,4 @@ exports.generateQuestions = functions.https.onCall(async (data, context) => {
         throw new HttpsError("internal", "Failed to generate questions from the AI model.", { details: error.message });
     }
 });
-```
-
-### Next Steps: The Final Configuration
-
-After updating the file, you need to perform the one-time permission update as requested by the error log.
-
-1.  **Go to the Google Cloud API Library:** Click this specific link to go directly to the Vertex AI API page for your project: [https://console.cloud.google.com/apis/library/aiplatform.googleapis.com?project=certification2-2bacd](https://console.cloud.google.com/apis/library/aiplatform.googleapis.com?project=certification2-2bacd)
-2.  **Enable the API:** On that page, click the blue **"Enable"** button. It may take a minute or two to complete.
-    3.  **Redeploy Your Function:** Finally, go to your terminal, navigate to the **root directory** of your project, and run the deploy command one last time:
-    ```bash
-    firebase deploy --only functions
-    
 

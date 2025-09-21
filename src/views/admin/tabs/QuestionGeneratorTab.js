@@ -318,12 +318,12 @@ const QuestionPreview = ({ questions, setQuestions, onSave, onCancel, isLoading 
             <div className="max-h-[60vh] overflow-y-auto space-y-4 pr-2">
                 {questions.map((q, qIndex) => (
                      <div key={qIndex} className="bg-neutral-50 dark:bg-neutral-900/50 p-4 rounded-lg">
-                        <textarea value={q.text} onChange={e => handleQuestionTextChange(qIndex, e.target.value)} className="w-full p-2 border rounded-md mb-2 bg-transparent dark:border-neutral-600"/>
+                        <textarea value={q.text} onChange={e => handleQuestionTextChange(qIndex, e.target.value)} className="w-full p-2 border rounded-md mb-2 bg-transparent dark:border-neutral-600 dark:text-white"/>
                         <div className="space-y-2">
                             {q.options.map((opt, oIndex) => (
                                 <div key={oIndex} className="flex items-center space-x-2">
                                     <input type="radio" name={`q-${qIndex}-correct`} checked={oIndex === q.correctAnswer} onChange={() => handleCorrectAnswerChange(qIndex, oIndex)} />
-                                    <input type="text" value={opt} onChange={e => handleOptionChange(qIndex, oIndex, e.target.value)} className="w-full p-2 border rounded-md bg-transparent dark:border-neutral-600" />
+                                    <input type="text" value={opt} onChange={e => handleOptionChange(qIndex, oIndex, e.target.value)} className="w-full p-2 border rounded-md bg-transparent dark:border-neutral-600 dark:text-white" />
                                 </div>
                             ))}
                         </div>
