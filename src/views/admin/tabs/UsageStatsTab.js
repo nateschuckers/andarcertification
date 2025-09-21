@@ -3,16 +3,17 @@ import PropTypes from 'prop-types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { formatTime } from '../../../utils/helpers';
 
-// This function processes real activity logs to prepare them for the chart.
-// It aggregates total logins and attempts by date.
+// This function now correctly processes Firestore Timestamps from the activity logs.
 const processActivityForChart = (logs) => {
     const dailyData = {};
     logs.forEach(log => {
-        if (log.lastLogin) {
-            const date = new Date(log.lastLogin).toISOString().split('T')[0];
+        // FIX: Check if lastLogin exists and is a Firestore Timestamp object
+        if (log.lastLogin && typeof log.lastLogin.toDate === 'function') {
+            const date = log.lastLogin.toDate().toISOString().split('T')[0]; // Convert to JS Date, then format
             if (!dailyData[date]) {
                 dailyData[date] = { date, logins: 0, attempts: 0 };
             }
+            // Aggregate logins and attempts for that day
             dailyData[date].logins += (log.logins || 0);
             dailyData[date].attempts += (log.attempts || 0);
         }
@@ -54,7 +55,7 @@ const aggregateData = (data, period) => {
 
 
 const UsageStatsTab = ({ users, courses, activityLogs }) => {
-    const [timeMetric, setTimeMetric] = useState('total'); // 'total' or 'avg'
+    const [timeMetric, setTimeMetric] = useState('total');
     const [userSortConfig, setUserSortConfig] = useState({ key: 'name', direction: 'ascending' });
     const [chartPeriod, setChartPeriod] = useState('Daily');
 
@@ -193,7 +194,7 @@ const UsageStatsTab = ({ users, courses, activityLogs }) => {
                         <th className="p-3 font-semibold tracking-wider">Avg. Training Time</th>
                     </tr></thead><tbody className="divide-y divide-neutral-200 dark:divide-neutral-700">{sortedUserActivity.map(user => {
                         const avgTime = (user.attempts || 0) > 0 ? (user.totalTrainingTime || 0) / user.attempts : 0;
-                        const lastLoginDate = user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never';
+                        const lastLoginDate = user.lastLogin && typeof user.lastLogin.toDate === 'function' ? user.lastLogin.toDate().toLocaleDateString() : 'Never';
                         return (
                             <tr key={user.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-700/50">
                                 <td className="p-3 font-semibold text-neutral-800 dark:text-white">{user.name}</td>
