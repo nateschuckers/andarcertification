@@ -5,6 +5,8 @@ import { useCollection } from './hooks/useCollection';
 import Header from './components/Header';
 import OnboardingModal from './components/OnboardingModal';
 import ErrorBoundary from './components/ErrorBoundary';
+import { db } from './firebase/config';
+import { doc, updateDoc } from 'firebase/firestore';
 
 // Lazy load views
 const LoginScreen = React.lazy(() => import('./views/auth/LoginScreen'));
@@ -16,23 +18,35 @@ function App() {
     const { userData, loading: authLoading } = useAuth();
     const [currentView, setCurrentView] = useState('dashboard');
     const [takingCourseId, setTakingCourseId] = useState(null);
-    const [takingCourseIcon, setTakingCourseIcon] = useState(null); // New state for the icon
+    const [takingCourseIcon, setTakingCourseIcon] = useState(null);
     const [theme, toggleTheme] = useTheme(userData);
     const [showOnboarding, setShowOnboarding] = useState(false);
     const { data: courses, loading: coursesLoading } = useCollection('courses', {
         skip: !userData
     });
 
+    // This effect now checks the database flag to show the tour
     useEffect(() => {
-        if (!authLoading && userData) {
-             if (!sessionStorage.getItem('hasSeenTour')) {
-                setShowOnboarding(true);
-                sessionStorage.setItem('hasSeenTour', 'true');
-            }
+        if (!authLoading && userData && userData.hasSeenTour === false) {
+            setShowOnboarding(true);
         }
     }, [userData, authLoading]);
     
-    // Updated handler to accept the icon
+    // This function closes the modal and updates the database
+    const handleCloseOnboarding = async () => {
+        setShowOnboarding(false);
+        if (userData) {
+            try {
+                const userDocRef = doc(db, 'users', userData.id);
+                await updateDoc(userDocRef, {
+                    hasSeenTour: true
+                });
+            } catch (error) {
+                console.error("Error updating tour status:", error);
+            }
+        }
+    };
+    
     const handleStartCourse = (courseId, icon) => {
         setTakingCourseId(courseId);
         setTakingCourseIcon(icon);
@@ -82,7 +96,6 @@ function App() {
 
     const renderMainContent = () => {
         if (courseBeingTaken) {
-            // Pass the icon down to the QuestionView
             return <QuestionView course={courseBeingTaken} user={userData} onBack={handleExitCourse} trackIcon={takingCourseIcon} />;
         }
         if (userData.isAdmin && currentView === 'admin') {
@@ -93,7 +106,7 @@ function App() {
 
     return ( 
         <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 transition-colors">
-            {showOnboarding && <OnboardingModal user={userData} onClose={() => setShowOnboarding(false)} />}
+            {showOnboarding && <OnboardingModal user={userData} onClose={handleCloseOnboarding} />}
             <div className={showOnboarding ? 'blur-sm' : ''}>
                 <Header 
                     user={userData} 
