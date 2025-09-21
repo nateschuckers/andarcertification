@@ -47,7 +47,7 @@ exports.generateQuestions = functions.https.onCall(async (data, context) => {
         });
         
         const responseData = response.data;
-        if (!responseData.candidates || !responseData.candidates[0].content || !responseData.candidates[0].content.parts[0] || !responseData.candidates[0].content.parts[0].text) {
+        if (!responseData?.candidates?.[0]?.content?.parts?.[0]?.text) {
              console.error("Invalid response structure from AI API:", JSON.stringify(responseData, null, 2));
              throw new Error("Invalid response structure from AI API.");
         }
