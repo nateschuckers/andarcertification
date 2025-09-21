@@ -15,7 +15,7 @@ const QuestionGeneratorTab = () => {
     
     // Form State
     const [apiKey, setApiKey] = useState('');
-    const [selectedModel, setSelectedModel] = useState('gemini-pro'); // New state for model selection
+    const [selectedModel, setSelectedModel] = useState('gemini-pro');
     const [selectedCourseId, setSelectedCourseId] = useState('');
     const [isCreatingNewCourse, setIsCreatingNewCourse] = useState(false);
     const [newCourseTitle, setNewCourseTitle] = useState('');
@@ -93,10 +93,10 @@ const QuestionGeneratorTab = () => {
                 difficultyInstruction = "The questions should require application or synthesis of concepts from the text. Incorrect answers should be very similar to the correct answer.";
             }
 
+            // FIX: Changed 'text' to 'combinedText' to use the correct variable
             const prompt = `Based *only* on the following text, generate exactly ${numQuestionsToGenerate} multiple-choice quiz questions with a difficulty of ${difficulty} out of 10. ${difficultyInstruction} For each question, provide 4 options and the correct answer. The answer options must be concise and fit neatly on a button. Format the output as a valid JSON array of objects, where each object has "text" (the question), "options" (an array of 4 strings), and "correctAnswer" (the zero-based index of the correct option). Your response must contain ONLY the JSON array and nothing else.\n\nText:\n${combinedText}`;
             
             const payload = { contents: [{ parts: [{ text: prompt }] }] };
-            // FIX: Use the selected model from state
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
             
             const response = await fetch(apiUrl, {
