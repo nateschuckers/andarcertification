@@ -46,7 +46,6 @@ exports.generateQuestions = functions.https.onCall(async (data, context) => {
             },
         });
         
-        // --- FIX: Corrected response parsing ---
         const responseData = response.data;
         if (!responseData.candidates || !responseData.candidates[0].content || !responseData.candidates[0].content.parts[0] || !responseData.candidates[0].content.parts[0].text) {
              console.error("Invalid response structure from AI API:", JSON.stringify(responseData, null, 2));
@@ -56,7 +55,6 @@ exports.generateQuestions = functions.https.onCall(async (data, context) => {
         const rawText = responseData.candidates[0].content.parts[0].text;
         const jsonString = rawText.replace(/```json|```/g, "").trim();
         const questions = JSON.parse(jsonString);
-        // --- END FIX ---
 
         return { questions };
 
@@ -64,5 +62,17 @@ exports.generateQuestions = functions.https.onCall(async (data, context) => {
         console.error("AI API Error:", error.response ? error.response.data.error : error.message);
         throw new HttpsError("internal", "Failed to generate questions from the AI model.", { details: error.message });
     }
-}
+});
+```
+
+### Next Steps: The Final Configuration
+
+After updating the file, you need to perform the one-time permission update as requested by the error log.
+
+1.  **Go to the Google Cloud API Library:** Click this specific link to go directly to the Vertex AI API page for your project: [https://console.cloud.google.com/apis/library/aiplatform.googleapis.com?project=certification2-2bacd](https://console.cloud.google.com/apis/library/aiplatform.googleapis.com?project=certification2-2bacd)
+2.  **Enable the API:** On that page, click the blue **"Enable"** button. It may take a minute or two to complete.
+    3.  **Redeploy Your Function:** Finally, go to your terminal, navigate to the **root directory** of your project, and run the deploy command one last time:
+    ```bash
+    firebase deploy --only functions
+    
 
