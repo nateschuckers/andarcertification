@@ -84,10 +84,10 @@ const QuestionGeneratorTab = () => {
             setStatusMessage({ text: 'Text extracted. Calling AI to generate questions... This may take a moment.', type: 'info' });
             
             let difficultyInstruction = '';
-            if (difficulty <= 3) {
-                difficultyInstruction = "The questions should be straightforward, with answers directly stated in the text.";
-            } else if (difficulty <= 7) {
-                difficultyInstruction = "The questions should require some comprehension of the text. Incorrect answers might be plausible but are factually wrong.";
+            if (difficulty <= 2) {
+                difficultyInstruction = "The questions should be straightforward, with answers directly stated in the text. These are simple questions to answer with a very low difficulty.";
+            } else if (difficulty <= 6) {
+                difficultyInstruction = "The questions should require some comprehension of the text. Incorrect answers might be plausible but are factually wrong. The questions have a medium difficulty to answer.";
             } else {
                 difficultyInstruction = "The questions should require application or synthesis of concepts from the text. Incorrect answers should be very similar to the correct answer.";
             }
@@ -342,6 +342,7 @@ QuestionPreview.propTypes = {
 };
 
 export default QuestionGeneratorTab;
+
 
 
 
