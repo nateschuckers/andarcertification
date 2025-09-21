@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types'; // <--- FIX: Added this import statement
 import { useCollection } from '../../../hooks/useCollection';
 import { db } from '../../../firebase/config';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { doc, setDoc, addDoc, updateDoc, writeBatch, collection, arrayUnion } from 'firebase/firestore';
+import { doc, addDoc, updateDoc, writeBatch, collection, arrayUnion } from 'firebase/firestore';
 
 // Note: Client-side PDF parsing can be resource-intensive for large files.
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
@@ -348,4 +349,18 @@ QuestionPreview.propTypes = {
 
 
 export default QuestionGeneratorTab;
+```
+
+### Next Steps
+
+After you've updated the file with the clean code, please push the change to your `refactor` branch on GitHub.
+
+```bash
+git add src/views/admin/tabs/QuestionGeneratorTab.js
+```
+```bash
+git commit -m "Fix: Add missing PropTypes import to QuestionGeneratorTab"
+```
+```bash
+git push origin refactor
 
