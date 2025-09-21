@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types'; // <--- FIX: Added this import statement
+import PropTypes from 'prop-types';
 import { useCollection } from '../../../hooks/useCollection';
 import { db } from '../../../firebase/config';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -13,7 +13,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.j
 const QuestionGeneratorTab = () => {
     const { data: courses, loading: coursesLoading } = useCollection('courses');
     const { data: tracks, loading: tracksLoading } = useCollection('tracks');
-    
+
     // Form State
     const [selectedCourseId, setSelectedCourseId] = useState('');
     const [isCreatingNewCourse, setIsCreatingNewCourse] = useState(false);
@@ -26,13 +26,13 @@ const QuestionGeneratorTab = () => {
     const [numQuestionsToGenerate, setNumQuestionsToGenerate] = useState(10);
     const [numQuestionsToUse, setNumQuestionsToUse] = useState(5);
     const [difficulty, setDifficulty] = useState(5);
-    
+
     // Process State
     const [isLoading, setIsLoading] = useState(false);
     const [statusMessage, setStatusMessage] = useState({ text: '', type: 'info' });
     const [generatedQuestions, setGeneratedQuestions] = useState([]);
     const [isPreviewing, setIsPreviewing] = useState(false);
-    
+
     useEffect(() => {
         if (selectedCourseId === 'CREATE_NEW') {
             setIsCreatingNewCourse(true);
@@ -52,7 +52,7 @@ const QuestionGeneratorTab = () => {
             setIsCreatingNewTrack(false);
         }
     }, [selectedTrackId]);
-    
+
     const handleGenerate = async () => {
         if (!pdfFiles || pdfFiles.length === 0) {
             setStatusMessage({ text: 'Please select one or more PDF files.', type: 'error' });
@@ -78,7 +78,7 @@ const QuestionGeneratorTab = () => {
             }
 
             setStatusMessage({ text: 'Text extracted. Calling AI to generate questions... This may take a moment.', type: 'info' });
-            
+
             const functions = getFunctions();
             const generateQuestionsFn = httpsCallable(functions, 'generateQuestions');
             const result = await generateQuestionsFn({
@@ -91,7 +91,7 @@ const QuestionGeneratorTab = () => {
             if (!questions || !Array.isArray(questions)) {
                 throw new Error("AI did not return a valid question array.");
             }
-            
+
             setGeneratedQuestions(questions);
             setIsPreviewing(true);
             setStatusMessage({ text: `Successfully generated ${questions.length} questions. Please review them.`, type: 'success' });
@@ -103,7 +103,7 @@ const QuestionGeneratorTab = () => {
             setIsLoading(false);
         }
     };
-    
+
     const extractTextFromPDF = async (file) => {
         const reader = new FileReader();
         return new Promise((resolve, reject) => {
@@ -125,7 +125,7 @@ const QuestionGeneratorTab = () => {
             reader.readAsArrayBuffer(file);
         });
     };
-    
+
     const handleSave = async () => {
         setIsLoading(true);
         setStatusMessage({ text: 'Saving to database...', type: 'info' });
@@ -160,14 +160,14 @@ const QuestionGeneratorTab = () => {
                     quizLength: Number(numQuestionsToUse),
                  });
             }
-            
+
             // Step 3: Associate course with track if a track is selected/created
             if (finalTrackId && finalTrackId !== 'CREATE_NEW' && finalCourseId) {
                 await updateDoc(doc(db, 'tracks', finalTrackId), {
                     requiredCourses: arrayUnion(finalCourseId)
                 });
             }
-            
+
             // Step 4: Batch write questions to the course subcollection
             const batch = writeBatch(db);
             generatedQuestions.forEach(q => {
@@ -214,7 +214,7 @@ const QuestionGeneratorTab = () => {
                     {statusMessage.text}
                 </div>
             )}
-            
+
             {/* Course & Track Selection */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg dark:border-neutral-700">
                 <div>
@@ -262,12 +262,12 @@ const QuestionGeneratorTab = () => {
                     )}
                 </div>
             )}
-            
+
             {/* Generation Parameters */}
             <div className="p-4 border rounded-lg dark:border-neutral-700 space-y-4">
                  <div>
                     <label htmlFor="pdfFile" className={labelClasses}>3. Upload PDF Document(s)</label>
-                    <input type="file" id="pdfFile" accept="application/pdf" onChange={e => setPdfFiles(e.target.files)} className={inputClasses + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"} multiple />
+                    <input type="file" id="pdfFile" accept="application/pdf" onChange={e => setPdfFiles(e.target.files)} className={inputClasses + " text-neutral-500 dark:text-neutral-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 dark:file:bg-blue-900/50 dark:file:text-blue-300 dark:hover:file:bg-blue-800/50"} multiple />
                 </div>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
@@ -349,5 +349,4 @@ QuestionPreview.propTypes = {
 
 
 export default QuestionGeneratorTab;
-
 
