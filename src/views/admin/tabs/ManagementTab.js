@@ -81,7 +81,8 @@ const ManagementTab = ({ users, courses, tracks }) => {
                 email: newUserEmail,
                 isAdmin: newUserIsAdmin,
                 trackIds: [],
-                themePreference: 'dark' // Add default theme preference
+                themePreference: 'dark',
+                hasSeenTour: false // Add the new flag for the tour
             });
             await setDoc(doc(db, "activityLogs", newUser.uid), {
                 logins: 0, lastLogin: null, totalTrainingTime: 0,
