@@ -247,7 +247,7 @@ const QuestionView = ({ course, user, onBack }) => {
 QuestionView.propTypes = {
     course: PropTypes.object.isRequired,
     user: PropTypes.object.isRequired,
-    onBack: PropTypes.func.isRequired
+    onBack: PropTypes.func.isRequired,
 };
 
 export default QuestionView;
