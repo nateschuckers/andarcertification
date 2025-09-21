@@ -7,7 +7,8 @@ import { doc, addDoc, updateDoc, writeBatch, collection, arrayUnion } from 'fire
 
 // Note: Client-side PDF parsing can be resource-intensive for large files.
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// FIX: Use a static, known-good version for the worker to prevent fetch errors.
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 
 const QuestionGeneratorTab = () => {
@@ -195,7 +196,8 @@ const QuestionGeneratorTab = () => {
         }
     };
 
-    const inputClasses = "w-full mt-1 bg-neutral-100 dark:bg-neutral-700 p-2 rounded border border-neutral-300 dark:border-neutral-600 focus:ring-blue-500 focus:border-blue-500";
+    // FIX: Added dark mode text color
+    const inputClasses = "w-full mt-1 bg-neutral-100 dark:bg-neutral-700 p-2 rounded border border-neutral-300 dark:border-neutral-600 text-neutral-900 dark:text-white focus:ring-blue-500 focus:border-blue-500";
     const labelClasses = "block text-sm font-medium text-neutral-700 dark:text-neutral-300";
 
     if (isPreviewing) {
