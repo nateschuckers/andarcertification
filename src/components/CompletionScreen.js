@@ -6,6 +6,7 @@ const ConfettiAnimation = () => {
 
     useEffect(() => {
         const canvas = canvasRef.current;
+        if (!canvas) return;
         const ctx = canvas.getContext('2d');
         let width = canvas.parentElement.offsetWidth;
         let height = canvas.parentElement.offsetHeight;
@@ -53,6 +54,7 @@ const ConfettiAnimation = () => {
 
         let animationFrameId;
         const animate = () => {
+            if (!ctx) return;
             ctx.clearRect(0, 0, width, height);
             confetti.forEach(piece => {
                 piece.update();
@@ -62,6 +64,7 @@ const ConfettiAnimation = () => {
         };
         
         const handleResize = () => {
+            if (!canvas.parentElement) return;
             width = canvas.parentElement.offsetWidth;
             height = canvas.parentElement.offsetHeight;
             canvas.width = width;
@@ -104,12 +107,12 @@ const CompletionScreen = ({ score, totalQuestions, onBack, onRetry }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-            <div className="relative bg-neutral-100 dark:bg-neutral-800 rounded-lg shadow-2xl max-w-lg w-full m-4 text-center overflow-hidden">
+            <div className="relative bg-neutral-100 dark:bg-neutral-800 rounded-lg shadow-2xl max-w-lg w-full m-4 text-center">
                 {hasPassed && <ConfettiAnimation />}
-                <div className={`absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full ${iconColor} flex items-center justify-center text-white text-4xl border-4 border-neutral-100 dark:border-neutral-800`}>
-                    <i className={`fa ${icon}`}></i>
-                </div>
-                <div className="p-8 pt-16">
+                <div className="relative p-8 pt-16">
+                    <div className={`absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full ${iconColor} flex items-center justify-center text-white text-4xl border-4 border-neutral-100 dark:border-neutral-800`}>
+                        <i className={`fa ${icon}`}></i>
+                    </div>
                     <h2 className={`text-3xl font-bold ${textColor} mb-3`}>{title}</h2>
                     <p className="text-neutral-600 dark:text-neutral-300 mb-6">{subtitle}</p>
                     <div className="bg-neutral-200 dark:bg-neutral-700/50 p-4 rounded-lg">
@@ -118,7 +121,7 @@ const CompletionScreen = ({ score, totalQuestions, onBack, onRetry }) => {
                         <p className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">({score} / {totalQuestions} correct)</p>
                     </div>
                 </div>
-                <div className="bg-white dark:bg-neutral-900/50 p-4 flex justify-center space-x-4">
+                <div className="bg-white dark:bg-neutral-900/50 p-4 flex justify-center space-x-4 rounded-b-lg">
                     {hasPassed ? (
                         <button onClick={onBack} className="btn-primary text-white font-bold py-3 px-6 rounded-lg w-full">Back to Courses</button>
                     ) : (
@@ -141,3 +144,4 @@ CompletionScreen.propTypes = {
 };
 
 export default CompletionScreen;
+
