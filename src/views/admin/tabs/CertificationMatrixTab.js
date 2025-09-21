@@ -77,9 +77,11 @@ const CertificationMatrixTab = ({ users, tracks, courses, allUserCourseData }) =
                 }, { merge: true });
             });
             await batch.commit();
+            // TODO: Set a success message to show to the admin.
         } catch(error) {
             console.error("Error re-issuing:", error);
-        } finally {
+            // TODO: Set an error message to show to the admin.
+        }
             setReissuingItem(null);
         }
     };
