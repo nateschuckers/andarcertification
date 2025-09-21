@@ -15,7 +15,6 @@ const QuestionGeneratorTab = () => {
     
     // Form State
     const [apiKey, setApiKey] = useState('');
-    const [selectedModel, setSelectedModel] = useState('gemini-pro');
     const [selectedCourseId, setSelectedCourseId] = useState('');
     const [isCreatingNewCourse, setIsCreatingNewCourse] = useState(false);
     const [newCourseTitle, setNewCourseTitle] = useState('');
@@ -96,7 +95,9 @@ const QuestionGeneratorTab = () => {
             const prompt = `Based *only* on the following text, generate exactly ${numQuestionsToGenerate} multiple-choice quiz questions with a difficulty of ${difficulty} out of 10. ${difficultyInstruction} For each question, provide 4 options and the correct answer. The answer options must be concise and fit neatly on a button. Format the output as a valid JSON array of objects, where each object has "text" (the question), "options" (an array of 4 strings), and "correctAnswer" (the zero-based index of the correct option). Your response must contain ONLY the JSON array and nothing else.\n\nText:\n${combinedText}`;
             
             const payload = { contents: [{ parts: [{ text: prompt }] }] };
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
+            // FIX: Hardcoded a stable, widely available model
+            const model = "gemini-1.5-flash-preview-0514";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
             
             const response = await fetch(apiUrl, {
                 method: 'POST',
@@ -158,45 +159,30 @@ const QuestionGeneratorTab = () => {
 
         try {
             let finalCourseId = selectedCourseId;
-
             let finalTrackId = selectedTrackId;
             if (isCreatingNewTrack && newTrackName) {
                 const trackRef = await addDoc(collection(db, 'tracks'), {
-                    name: newTrackName,
-                    icon: 'fa-microchip',
-                    isArchived: false,
-                    requiredCourses: []
+                    name: newTrackName, icon: 'fa-microchip', isArchived: false, requiredCourses: []
                 });
                 finalTrackId = trackRef.id;
             }
-
             if (isCreatingNewCourse) {
                 const courseRef = await addDoc(collection(db, 'courses'), {
-                    title: `${newCourseTitle} (${newCourseLevel})`,
-                    level: Number(newCourseLevel),
-                    quizLength: Number(numQuestionsToUse),
-                    isArchived: false
+                    title: `${newCourseTitle} (${newCourseLevel})`, level: Number(newCourseLevel), quizLength: Number(numQuestionsToUse), isArchived: false
                 });
                 finalCourseId = courseRef.id;
             } else {
-                 await updateDoc(doc(db, 'courses', finalCourseId), {
-                    quizLength: Number(numQuestionsToUse),
-                 });
+                 await updateDoc(doc(db, 'courses', finalCourseId), { quizLength: Number(numQuestionsToUse) });
             }
-            
             if (finalTrackId && finalTrackId !== 'CREATE_NEW' && finalCourseId) {
-                await updateDoc(doc(db, 'tracks', finalTrackId), {
-                    requiredCourses: arrayUnion(finalCourseId)
-                });
+                await updateDoc(doc(db, 'tracks', finalTrackId), { requiredCourses: arrayUnion(finalCourseId) });
             }
-            
             const batch = writeBatch(db);
             generatedQuestions.forEach(q => {
                 const questionRef = doc(collection(db, `courses/${finalCourseId}/questions`));
                 batch.set(questionRef, q);
             });
             await batch.commit();
-
             setStatusMessage({ text: `Successfully saved ${generatedQuestions.length} questions.`, type: 'success' });
             setIsPreviewing(false);
             setGeneratedQuestions([]);
@@ -205,7 +191,6 @@ const QuestionGeneratorTab = () => {
             setSelectedTrackId('');
             setNewTrackName('');
             setPdfFiles(null);
-
         } catch (error) {
              console.error("Save Error:", error);
             setStatusMessage({ text: `An error occurred while saving: ${error.message}`, type: 'error' });
@@ -227,25 +212,12 @@ const QuestionGeneratorTab = () => {
                 <h2 className="text-2xl font-bold text-center text-neutral-800 dark:text-white mb-2">AI Course Question Generator</h2>
                 <p className="text-center text-neutral-500 dark:text-neutral-400">Generate quiz questions from PDF documents using AI.</p>
             </div>
-
             {statusMessage.text && ( <div className={`text-center p-3 rounded-md text-sm ${statusMessage.type === 'success' ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300' : statusMessage.type === 'error' ? 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300' : 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'}`}> {statusMessage.text} </div> )}
-            
-            <div className="p-4 border rounded-lg dark:border-neutral-700 grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <div>
-                    <label htmlFor="apiKey" className={labelClasses}>Google AI API Key</label>
-                    <input type="password" id="apiKey" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="Enter your Google AI Studio API Key" className={inputClasses}/>
-                    <p className="text-xs text-neutral-500 mt-1">Get a key from <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Google AI Studio</a>.</p>
-                 </div>
-                 <div>
-                    <label htmlFor="modelSelector" className={labelClasses}>Select AI Model</label>
-                    <select id="modelSelector" value={selectedModel} onChange={e => setSelectedModel(e.target.value)} className={inputClasses}>
-                        <option value="gemini-pro">Gemini Pro (Recommended)</option>
-                        <option value="gemini-1.5-flash-preview-0514">Gemini 1.5 Flash (Preview)</option>
-                    </select>
-                     <p className="text-xs text-neutral-500 mt-1">Select a model. Some models may not work with your API key.</p>
-                 </div>
+            <div className="p-4 border rounded-lg dark:border-neutral-700">
+                 <label htmlFor="apiKey" className={labelClasses}>Google AI API Key</label>
+                 <input type="password" id="apiKey" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="Enter your Google AI Studio API Key" className={inputClasses}/>
+                 <p className="text-xs text-neutral-500 mt-1">Get a key from <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Google AI Studio</a>.</p>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg dark:border-neutral-700">
                 <div>
                     <label htmlFor="courseSelector" className={labelClasses}>1. Select Course</label>
@@ -264,7 +236,6 @@ const QuestionGeneratorTab = () => {
                     </select>
                 </div>
             </div>
-
             {(isCreatingNewCourse || isCreatingNewTrack) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900/30">
                     {isCreatingNewCourse && (
@@ -291,7 +262,6 @@ const QuestionGeneratorTab = () => {
                     )}
                 </div>
             )}
-            
             <div className="p-4 border rounded-lg dark:border-neutral-700 space-y-4">
                  <div>
                     <label htmlFor="pdfFile" className={labelClasses}>3. Upload PDF Document(s)</label>
@@ -312,7 +282,6 @@ const QuestionGeneratorTab = () => {
                     </div>
                 </div>
             </div>
-
             <button onClick={handleGenerate} disabled={isLoading} className="w-full btn-primary text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center space-x-2 hover:bg-blue-700 transition-colors disabled:bg-neutral-400">
                 {isLoading ? <><i className="fa fa-spinner fa-spin"></i><span>Generating...</span></> : <span>Generate Questions</span>}
             </button>
@@ -336,7 +305,6 @@ const QuestionPreview = ({ questions, setQuestions, onSave, onCancel, isLoading 
         updated[qIndex].correctAnswer = oIndex;
         setQuestions(updated);
     };
-
     return (
         <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md dark:shadow-neutral-900 p-8 max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold text-neutral-800 dark:text-white mb-4">Review Generated Questions</h2>
@@ -372,7 +340,6 @@ QuestionPreview.propTypes = {
     onCancel: PropTypes.func.isRequired,
     isLoading: PropTypes.bool.isRequired,
 };
-
 
 export default QuestionGeneratorTab;
 
