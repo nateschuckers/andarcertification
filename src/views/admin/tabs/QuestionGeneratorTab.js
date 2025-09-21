@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useCollection } from '../../../hooks/useCollection';
 import { db } from '../../../firebase/config';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { doc, addDoc, updateDoc, writeBatch, collection, arrayUnion } from 'firebase/firestore';
 
 // Note: Client-side PDF parsing can be resource-intensive for large files.
@@ -77,13 +78,12 @@ const QuestionGeneratorTab = () => {
         try {
             let combinedText = '';
             for (const file of pdfFiles) {
-                const text = await extractTextFromPDF(file);
-                combinedText += text + '\n\n';
+                const textFromFile = await extractTextFromPDF(file);
+                combinedText += textFromFile + '\n\n';
             }
 
             setStatusMessage({ text: 'Text extracted. Calling AI to generate questions... This may take a moment.', type: 'info' });
             
-            // --- AI Generation Logic (Client-Side) ---
             let difficultyInstruction = '';
             if (difficulty <= 3) {
                 difficultyInstruction = "The questions should be straightforward, with answers directly stated in the text.";
@@ -93,7 +93,8 @@ const QuestionGeneratorTab = () => {
                 difficultyInstruction = "The questions should require application or synthesis of concepts from the text. Incorrect answers should be very similar to the correct answer.";
             }
 
-            const prompt = `Based *only* on the following text, generate exactly ${numQuestionsToGenerate} multiple-choice quiz questions with a difficulty of ${difficulty} out of 10. ${difficultyInstruction} For each question, provide 4 options and the correct answer. The answer options must be concise and fit neatly on a button. Format the output as a valid JSON array of objects, where each object has "text" (the question), "options" (an array of 4 strings), and "correctAnswer" (the zero-based index of the correct option). Your response must contain ONLY the JSON array and nothing else.\n\nText:\n${text}`;
+            // FIX: Changed 'text' to 'combinedText' to use the correct variable
+            const prompt = `Based *only* on the following text, generate exactly ${numQuestionsToGenerate} multiple-choice quiz questions with a difficulty of ${difficulty} out of 10. ${difficultyInstruction} For each question, provide 4 options and the correct answer. The answer options must be concise and fit neatly on a button. Format the output as a valid JSON array of objects, where each object has "text" (the question), "options" (an array of 4 strings), and "correctAnswer" (the zero-based index of the correct option). Your response must contain ONLY the JSON array and nothing else.\n\nText:\n${combinedText}`;
             
             const payload = { contents: [{ parts: [{ text: prompt }] }] };
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-preview-0514:generateContent?key=${apiKey}`;
@@ -113,7 +114,6 @@ const QuestionGeneratorTab = () => {
             const rawText = result.candidates[0].content.parts[0].text;
             const jsonString = rawText.replace(/```json|```/g, "").trim();
             const questions = JSON.parse(jsonString);
-            // --- End AI Logic ---
 
             if (!questions || !Array.isArray(questions)) {
                 throw new Error("AI did not return a valid question array.");
@@ -170,7 +170,6 @@ const QuestionGeneratorTab = () => {
 
             {statusMessage.text && ( <div className={`text-center p-3 rounded-md text-sm ${statusMessage.type === 'success' ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300' : statusMessage.type === 'error' ? 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300' : 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'}`}> {statusMessage.text} </div> )}
             
-            {/* API Key Input */}
             <div className="p-4 border rounded-lg dark:border-neutral-700">
                  <label htmlFor="apiKey" className={labelClasses}>Google AI API Key</label>
                  <input type="password" id="apiKey" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="Enter your Google AI Studio API Key" className={inputClasses}/>
@@ -178,7 +177,6 @@ const QuestionGeneratorTab = () => {
                  <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">Note: For security, do not share this key. It is used directly from your browser.</p>
             </div>
 
-            {/* Course & Track Selection */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg dark:border-neutral-700">
                 <div>
                     <label htmlFor="courseSelector" className={labelClasses}>1. Select Course</label>
@@ -198,7 +196,6 @@ const QuestionGeneratorTab = () => {
                 </div>
             </div>
 
-            {/* New Course & Track Fields */}
             {(isCreatingNewCourse || isCreatingNewTrack) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900/30">
                     {isCreatingNewCourse && (
@@ -226,7 +223,6 @@ const QuestionGeneratorTab = () => {
                 </div>
             )}
             
-            {/* Generation Parameters */}
             <div className="p-4 border rounded-lg dark:border-neutral-700 space-y-4">
                  <div>
                     <label htmlFor="pdfFile" className={labelClasses}>3. Upload PDF Document(s)</label>
