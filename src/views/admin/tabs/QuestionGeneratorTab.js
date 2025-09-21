@@ -349,18 +349,5 @@ QuestionPreview.propTypes = {
 
 
 export default QuestionGeneratorTab;
-```
 
-### Next Steps
-
-After you've updated the file with the clean code, please push the change to your `refactor` branch on GitHub.
-
-```bash
-git add src/views/admin/tabs/QuestionGeneratorTab.js
-```
-```bash
-git commit -m "Fix: Add missing PropTypes import to QuestionGeneratorTab"
-```
-```bash
-git push origin refactor
 
