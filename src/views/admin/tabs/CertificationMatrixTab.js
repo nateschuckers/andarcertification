@@ -143,7 +143,6 @@ const CertificationMatrixTab = ({ users, tracks, courses, allUserCourseData }) =
     const getSortIcon = (key) => { if (sortConfig.key !== key) return <i className="fa-solid fa-sort ml-2 text-neutral-400"></i>; if (sortConfig.direction === 'ascending') return <i className="fa-solid fa-sort-up ml-2"></i>; return <i className="fa-solid fa-sort-down ml-2"></i>; };
     const StatusBadge = ({ text }) => { const colorMap = { 'Overdue': 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300', 'Due Soon': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300', 'On Track': 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300', 'N/A': 'bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-300', 'Warning': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300', 'Completed': 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300', 'In Progress': 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300', 'Not Started': 'bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-300', 'Not Assigned': 'bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-300',}; const statusText = text.startsWith('Completed') ? 'Completed' : text; return <span className={`px-2 py-1 text-xs font-medium rounded-full ${colorMap[statusText] || colorMap['N/A']}`}>{text}</span>; };
     
-    // Sub-components defined inside the main component to have access to its scope (e.g., setReissuingItem)
     const UserDetailDrawer = ({ user }) => {
         const userCourseData = allUserCourseData[user.id] || {};
         const allRequiredCourseIds = user.assignedTracks.flatMap(t => t.requiredCourses);
@@ -211,10 +210,58 @@ const CertificationMatrixTab = ({ users, tracks, courses, allUserCourseData }) =
         );
     };
 
-    const AtRiskUsersPanel = ({ users }) => { return (/* ...JSX... */) };
-    const CourseFailuresPanel = ({ failures }) => { return (/* ...JSX... */) };
+    const AtRiskUsersPanel = ({ users }) => {
+        return (
+             <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md dark:shadow-neutral-900 p-4">
+                <h3 className="font-semibold mb-4 text-yellow-600 dark:text-yellow-400"><i className="fa-solid fa-triangle-exclamation mr-2"></i>Users Needing Attention</h3>
+                <div className="divide-y divide-neutral-200 dark:divide-neutral-700 h-48 overflow-y-auto">
+                    {users.length > 0 ? users.map(({ user, flaggedCourses }) => (
+                        <div key={user.id} className="py-3 flex justify-between items-center">
+                            <div>
+                                <p className="font-semibold text-neutral-800 dark:text-white">{user.name}</p>
+                                <ul className="mt-1 space-y-1">
+                                    {flaggedCourses.map(({course, status}) => (
+                                        <li key={course.id} className="text-xs text-neutral-500 dark:text-neutral-400 ml-4 flex items-center">
+                                            <StatusBadge text={status.text} />
+                                            <span className="ml-2">{course.title}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                            <a href={`mailto:${user.email}`} className="btn-secondary text-white text-xs px-3 py-1 rounded flex items-center"><i className="fa-solid fa-envelope mr-2"></i>Remind</a>
+                        </div>
+                    )) : <p className="text-sm text-neutral-500 dark:text-neutral-400 p-4 text-center">No users currently at risk.</p>}
+                </div>
+            </div>
+        );
+    };
     
-    // FIX: Main return statement is now correctly inside the component function
+    const CourseFailuresPanel = ({ failures }) => {
+        return (
+            <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md dark:shadow-neutral-900 p-4">
+                <h3 className="font-semibold mb-4 text-red-600 dark:text-red-400"><i className="fa-solid fa-bomb mr-2"></i>Top Course Failures</h3>
+                <div className="divide-y divide-neutral-200 dark:divide-neutral-700 h-48 overflow-y-auto">
+                    {failures.length > 0 ? failures.map(({ course, totalFails, users }) => (
+                        <div key={course.id} className="py-3">
+                            <div className="flex justify-between items-center">
+                                <p className="font-semibold text-neutral-800 dark:text-white">{course.title}</p>
+                                <p className="font-bold text-red-500">{totalFails} <span className="font-normal text-xs">Total Fails</span></p>
+                            </div>
+                            <ul className="mt-1 space-y-1">
+                                {users.sort((a,b) => b.count - a.count).map((user, index) => (
+                                    <li key={index} className="text-xs text-neutral-500 dark:text-neutral-400 ml-4 flex justify-between">
+                                        <span>{user.name}</span>
+                                        <span>({user.count} fails)</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )) : <p className="text-sm text-neutral-500 dark:text-neutral-400 p-4 text-center">No course failures recorded.</p>}
+                </div>
+            </div>
+        );
+    };
+    
     return (
         <div>
             <ReissueModal item={reissuingItem} onConfirm={handleReissue} onCancel={() => setReissuingItem(null)} />
