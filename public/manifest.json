@@ -1,26 +1,31 @@
 {
   "short_name": "Andar Cert",
-  "name": "Andar Certification",
-  "description": "Andar Software's onboarding and learning platform",
+  "name": "Andar Certification Platform",
+  "description": "Our platform for managing and viewing certifications.",
+  "start_url": ".",
+  
+  "display": "standalone",
+  
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
   "icons": [
     {
-      "src": "andar180.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-	{
-      "src": "andar350.png",
-      "type": "image/png",
-      "sizes": "384x384"
+      "src": "andar180",
+      "sizes": "180x180",
+      "type": "image/png"
     },
     {
-      "src": "logo512.png",
+      "src": "andar350",
+      "sizes": "350x350",
+      "type": "image/png"
+    },
+    {
+      "src": "andar512",
+      "sizes": "512x512",
       "type": "image/png",
-      "sizes": "512x512"
+      "purpose": "any maskable"
     }
-  ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  ]
+}
+
 }
