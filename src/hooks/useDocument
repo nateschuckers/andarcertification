@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { db } from '../firebase/config';
 import { doc, onSnapshot } from 'firebase/firestore';
 
+// FIX: Changed from a default export to a named export for consistency
 export const useDocument = (collectionName, id) => {
     const [document, setDocument] = useState(null);
     const [error, setError] = useState(null);
@@ -21,8 +22,6 @@ export const useDocument = (collectionName, id) => {
                 setDocument({ id: snapshot.id, ...snapshot.data() });
                 setError(null);
             } else {
-                // You can decide how to handle non-existent docs, e.g., for new users
-                // For this app, we expect an activityLog to be created with the user.
                 setDocument(null);
                 setError(`Document does not exist in collection: ${collectionName}`);
             }
@@ -40,3 +39,4 @@ export const useDocument = (collectionName, id) => {
 
     return { document, error, loading };
 };
+
