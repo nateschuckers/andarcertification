@@ -10,7 +10,7 @@ import { formatTime } from '../../utils/helpers';
 const UserDashboard = ({ user, onStartCourse }) => {
     const { data: courses, loading: coursesLoading } = useCollection('courses');
     const { data: tracks, loading: tracksLoading } = useCollection('tracks');
-    const { data: users, loading: usersLoading } = useCollection('users');
+    const { data: users, loading: usersLoading } = useCollection('users'); // For leaderboard
     const [userCourseData, setUserCourseData] = useState({});
     const [userCourseDataLoading, setUserCourseDataLoading] = useState(true);
 

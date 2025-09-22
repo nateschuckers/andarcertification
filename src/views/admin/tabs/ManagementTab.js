@@ -336,7 +336,7 @@ const ManagementTab = ({ users, courses, tracks }) => {
                     </div>
                 </CollapsibleCard>
 
-                 <CollapsibleCard title="Manage Courses & Paths">
+                <CollapsibleCard title="Manage Courses & Paths">
                     <div className="mb-6">
                         <form onSubmit={handleCreateCourse} className="space-y-3 mb-4 p-4 bg-neutral-50 dark:bg-neutral-900/50 rounded-lg">
                             <h4 className="font-semibold text-neutral-800 dark:text-white">Create New Course</h4>
