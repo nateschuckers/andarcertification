@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { db } from '../../firebase/config';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, doc } from 'firebase/firestore'; // Added doc
 import { useCollection } from '../../hooks/useCollection';
-import { useDocument } from '../../hooks/useDocument'; // FIX: This is now a correct named import.
 import CourseCard from '../../components/CourseCard';
 import CompletedTrackCard from '../../components/CompletedTrackCard';
 import { formatTime } from '../../utils/helpers';
@@ -11,11 +10,27 @@ import { formatTime } from '../../utils/helpers';
 const UserDashboard = ({ user, onStartCourse }) => {
     const { data: courses, loading: coursesLoading } = useCollection('courses');
     const { data: tracks, loading: tracksLoading } = useCollection('tracks');
-    const { data: users, loading: usersLoading } = useCollection('users'); // For leaderboard
+    const { data: users, loading: usersLoading } = useCollection('users');
     const [userCourseData, setUserCourseData] = useState({});
     const [userCourseDataLoading, setUserCourseDataLoading] = useState(true);
 
-    const { document: userActivityLog, loading: activityLogLoading } = useDocument('activityLogs', user.id);
+    // FIX: Replaced useDocument hook with direct Firestore listener
+    const [userActivityLog, setUserActivityLog] = useState(null);
+    const [activityLogLoading, setActivityLogLoading] = useState(true);
+
+    useEffect(() => {
+        if (!user || !user.id) {
+            setActivityLogLoading(false);
+            return;
+        }
+        const unsub = onSnapshot(doc(db, 'activityLogs', user.id), (doc) => {
+            if (doc.exists()) {
+                setUserActivityLog({ id: doc.id, ...doc.data() });
+            }
+            setActivityLogLoading(false);
+        });
+        return () => unsub();
+    }, [user]);
 
     useEffect(() => {
         if (!user || !user.id) {
