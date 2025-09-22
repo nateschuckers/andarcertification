@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { db } from '../../firebase/config';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { useCollection } from '../../hooks/useCollection';
-import useDocument from '../../hooks/useDocument'; // FIX: Switched to a default import
+import { useDocument } from '../../hooks/useDocument'; // FIX: Changed to a named import
 import CourseCard from '../../components/CourseCard';
 import CompletedTrackCard from '../../components/CompletedTrackCard';
 import { formatTime } from '../../utils/helpers';
