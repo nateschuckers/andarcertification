@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { collectionGroup, getDocs } from 'firebase/firestore';
+import { collectionGroup, onSnapshot, query } from 'firebase/firestore'; // Import onSnapshot
 import { db } from '../../firebase/config';
 import { useCollection } from '../../hooks/useCollection';
 import CertificationMatrixTab from './tabs/CertificationMatrixTab';
 import UsageStatsTab from './tabs/UsageStatsTab';
 import ManagementTab from './tabs/ManagementTab';
 import QuestionGeneratorTab from './tabs/QuestionGeneratorTab';
-import FeedbackTab from './tabs/FeedbackTab'; // Import the new tab
+import FeedbackTab from './tabs/FeedbackTab';
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('matrix');
     const [dbError, setDbError] = useState(null);
 
-    // Use custom hook to fetch collections
     const { data: users, loading: usersLoading } = useCollection('users');
     const { data: tracks, loading: tracksLoading } = useCollection('tracks');
     const { data: courses, loading: coursesLoading } = useCollection('courses');
@@ -21,32 +20,32 @@ const AdminDashboard = () => {
     const [allUserCourseData, setAllUserCourseData] = useState({});
     const [allUserCourseDataLoading, setAllUserCourseDataLoading] = useState(true);
 
+    // FIX: Switched from a one-time getDocs to a real-time onSnapshot listener
     useEffect(() => {
-        const fetchAll = async () => {
-            setDbError(null);
-            setAllUserCourseDataLoading(true);
-            try {
-                const q = collectionGroup(db, 'userCourseData');
-                const querySnapshot = await getDocs(q);
-                const allData = {};
-                querySnapshot.forEach((doc) => {
-                    const path = doc.ref.path.split('/');
-                    const userId = path[1];
-                    const courseId = doc.id;
-                    if (!allData[userId]) {
-                        allData[userId] = {};
-                    }
-                    allData[userId][courseId] = doc.data();
-                });
-                setAllUserCourseData(allData);
-            } catch (error) {
-                 console.error("Error fetching all user course data:", error);
-                 setDbError(error);
-            } finally {
-                setAllUserCourseDataLoading(false);
-            }
-        };
-        fetchAll();
+        setDbError(null);
+        const q = query(collectionGroup(db, 'userCourseData'));
+        
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const allData = {};
+            querySnapshot.forEach((doc) => {
+                const path = doc.ref.path.split('/');
+                const userId = path[1];
+                const courseId = doc.id;
+                if (!allData[userId]) {
+                    allData[userId] = {};
+                }
+                allData[userId][courseId] = doc.data();
+            });
+            setAllUserCourseData(allData);
+            setAllUserCourseDataLoading(false);
+        }, (error) => {
+            console.error("Error fetching all user course data:", error);
+            setDbError(error);
+            setAllUserCourseDataLoading(false);
+        });
+
+        // Cleanup the listener on unmount
+        return () => unsubscribe();
     }, []);
     
     const isLoading = usersLoading || tracksLoading || coursesLoading || activityLogsLoading || allUserCourseDataLoading;
@@ -72,20 +71,20 @@ const AdminDashboard = () => {
             case 'usage': return <UsageStatsTab users={users} courses={courses} activityLogs={activityLogs} />;
             case 'management': return <ManagementTab users={users} courses={courses} tracks={tracks} />;
             case 'generator': return <QuestionGeneratorTab />;
-            case 'feedback': return <FeedbackTab />; // Add case for the new tab
+            case 'feedback': return <FeedbackTab />;
             default: return null;
         }
     };
-    // Add new tab label
+    
     const tabLabels = {'matrix': 'Certification Matrix', 'usage': 'Usage Stats', 'management': 'Management', 'generator': 'Question Generator', 'feedback': 'Feedback Content'};
     return (
         <div className="p-8">
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-3xl font-bold text-neutral-900 dark:text-white">Admin Dashboard</h2>
             </div>
-            <div className="flex space-x-1 mb-6 border-b border-neutral-200 dark:border-neutral-700">
+            <div className="flex space-x-1 mb-6 border-b border-neutral-200 dark:border-neutral-700 overflow-x-auto">
                 {Object.keys(tabLabels).map(tab => (
-                    <button key={tab} onClick={() => setActiveTab(tab)} className={`py-2 px-4 capitalize text-sm font-semibold transition-colors ${activeTab === tab ? 'border-b-2 border-blue-500 text-blue-500' : 'text-neutral-500 dark:text-neutral-400 hover:text-blue-500'}`}>
+                    <button key={tab} onClick={() => setActiveTab(tab)} className={`py-2 px-4 capitalize text-sm font-semibold transition-colors whitespace-nowrap ${activeTab === tab ? 'border-b-2 border-blue-500 text-blue-500' : 'text-neutral-500 dark:text-neutral-400 hover:text-blue-500'}`}>
                         {tabLabels[tab]}
                     </button>
                 ))}
