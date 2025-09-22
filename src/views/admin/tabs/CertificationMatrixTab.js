@@ -1,8 +1,83 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { db } from '../../../firebase/config.js';
-import { doc, writeBatch } from 'firebase/firestore';
-import { getCourseStatusInfo } from '../../../utils/helpers.js';
+import { db } from 'firebase/config';
+import { doc, writeBatch, updateDoc, arrayUnion, setDoc } from 'firebase/firestore';
+import { getCourseStatusInfo } from 'utils/helpers';
+
+// Modal for assigning courses/paths
+const AddCourseOrPathModal = ({ user, courses, tracks, allUserCourseData, onConfirm, onCancel }) => {
+    const [selectedType, setSelectedType] = useState('path');
+    const [selectedId, setSelectedId] = useState('');
+    const [dueDate, setDueDate] = useState('');
+
+    if (!user) return null;
+
+    const userCourseIds = useMemo(() => Object.keys(allUserCourseData[user.id] || {}), [allUserCourseData, user.id]);
+    const availableTracks = useMemo(() => tracks.filter(t => !(user.trackIds || []).includes(t.id)), [tracks, user.trackIds]);
+    const availableCourses = useMemo(() => courses.filter(c => !userCourseIds.includes(c.id)), [courses, userCourseIds]);
+
+    useEffect(() => {
+        // Reset selection when type changes or user changes
+        setSelectedId('');
+        setDueDate('');
+    }, [selectedType, user]);
+
+    const handleSubmit = () => {
+        if (!selectedId) return;
+        if (selectedType === 'course' && !dueDate) {
+            return;
+        }
+        onConfirm(selectedType, selectedId, dueDate);
+    };
+
+    const inputClasses = "w-full mt-1 bg-neutral-100 dark:bg-neutral-700 p-2 rounded border border-neutral-300 dark:border-neutral-600 text-neutral-900 dark:text-white focus:ring-blue-500 focus:border-blue-500";
+    
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-xl p-6 w-full max-w-md">
+                <h3 className="text-lg font-bold text-neutral-900 dark:text-white">Assign to {user.name}</h3>
+                
+                <div className="mt-4">
+                    <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Type</label>
+                    <div className="flex space-x-4 mt-1">
+                        <label className="flex items-center cursor-pointer">
+                            <input type="radio" name="assignType" value="path" checked={selectedType === 'path'} onChange={() => setSelectedType('path')} className="form-radio"/>
+                            <span className="ml-2 text-neutral-800 dark:text-neutral-200">Path</span>
+                        </label>
+                        <label className="flex items-center cursor-pointer">
+                            <input type="radio" name="assignType" value="course" checked={selectedType === 'course'} onChange={() => setSelectedType('course')} className="form-radio"/>
+                            <span className="ml-2 text-neutral-800 dark:text-neutral-200">Course</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div className="mt-4">
+                    <label htmlFor="itemSelect" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Select {selectedType}</label>
+                    <select id="itemSelect" value={selectedId} onChange={e => setSelectedId(e.target.value)} className={inputClasses}>
+                        <option value="">-- Select an item --</option>
+                        {selectedType === 'path' ? 
+                            availableTracks.map(track => <option key={track.id} value={track.id}>{track.name}</option>) :
+                            availableCourses.map(course => <option key={course.id} value={course.id}>{course.title}</option>)
+                        }
+                    </select>
+                </div>
+
+                {selectedType === 'course' && (
+                    <div className="mt-4">
+                        <label htmlFor="dueDate" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Set a due date:</label>
+                        <input type="date" id="dueDate" value={dueDate} onChange={e => setDueDate(e.target.value)} className={inputClasses + " dark:[color-scheme:dark]"} />
+                    </div>
+                )}
+                
+                <div className="flex justify-end space-x-4 mt-6">
+                    <button onClick={onCancel} className="btn-secondary text-white font-bold py-2 px-4 rounded">Cancel</button>
+                    <button onClick={handleSubmit} disabled={!selectedId || (selectedType === 'course' && !dueDate)} className="btn-primary text-white font-bold py-2 px-4 rounded disabled:bg-neutral-400">Confirm Assignment</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 // Modal for re-issuing courses/paths
 const ReissueModal = ({ item, onConfirm, onCancel }) => {
@@ -43,6 +118,36 @@ const CertificationMatrixTab = ({ users, tracks, courses, allUserCourseData }) =
     const [expandedRowId, setExpandedRowId] = useState(null);
     const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'ascending' });
     const [reissuingItem, setReissuingItem] = useState(null);
+    const [assigningToUser, setAssigningToUser] = useState(null);
+
+    const handleAssignItem = async (type, itemId, dueDate) => {
+        if (!assigningToUser) return;
+    
+        if (type === 'path') {
+            const userRef = doc(db, 'users', assigningToUser.id);
+            try {
+                await updateDoc(userRef, {
+                    trackIds: arrayUnion(itemId)
+                });
+            } catch (error) {
+                console.error("Error assigning path:", error);
+            }
+        } else if (type === 'course') {
+            const userCourseRef = doc(db, `users/${assigningToUser.id}/userCourseData`, itemId);
+            try {
+                await setDoc(userCourseRef, {
+                    status: 'in-progress',
+                    dueDate: dueDate,
+                    completedDate: null,
+                    failCount: 0,
+                    attemptCount: 0,
+                });
+            } catch (error) {
+                console.error("Error assigning course:", error);
+            }
+        }
+        setAssigningToUser(null);
+    };
 
     const handleReissue = async (newDueDate) => {
         if (!reissuingItem || !newDueDate) return;
@@ -204,6 +309,7 @@ const CertificationMatrixTab = ({ users, tracks, courses, allUserCourseData }) =
                     <h4 className="font-semibold text-neutral-900 dark:text-white mb-2 mt-6">Admin Actions</h4>
                     <div className="flex space-x-2">
                         <a href={`mailto:${user.email}`} className="btn-secondary text-white text-xs px-3 py-1 rounded flex items-center"><i className="fa-solid fa-envelope mr-2"></i>Email User</a>
+                        <button onClick={() => setAssigningToUser(user)} className="btn-primary text-white text-xs px-3 py-1 rounded flex items-center"><i className="fa-solid fa-plus mr-2"></i>Assign</button>
                     </div>
                 </div>
             </div>
@@ -264,6 +370,14 @@ const CertificationMatrixTab = ({ users, tracks, courses, allUserCourseData }) =
     
     return (
         <div>
+            <AddCourseOrPathModal 
+                user={assigningToUser} 
+                courses={courses} 
+                tracks={tracks}
+                allUserCourseData={allUserCourseData}
+                onConfirm={handleAssignItem} 
+                onCancel={() => setAssigningToUser(null)} 
+            />
             <ReissueModal item={reissuingItem} onConfirm={handleReissue} onCancel={() => setReissuingItem(null)} />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 <AtRiskUsersPanel users={atRiskUsers} />
