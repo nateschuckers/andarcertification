@@ -116,6 +116,16 @@ const UserDashboard = ({ user, onStartCourse }) => {
                 </div> 
                 <div className="md:col-span-1 space-y-6">
                     <h3 className="text-xl font-semibold text-neutral-900 dark:text-white">Your Stats</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md dark:shadow-neutral-900 p-4">
+                            <p className="text-neutral-500 dark:text-neutral-400 text-sm">Courses Passed</p>
+                            <p className="text-2xl font-semibold text-green-600 dark:text-green-400">{userActivityLog?.passes || 0}</p>
+                        </div>
+                        <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md dark:shadow-neutral-900 p-4">
+                            <p className="text-neutral-500 dark:text-neutral-400 text-sm">Courses Failed</p>
+                            <p className="text-2xl font-semibold text-red-600 dark:text-red-400">{userActivityLog?.fails || 0}</p>
+                        </div>
+                    </div>
                     <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md dark:shadow-neutral-900 p-4">
                         <p className="text-neutral-500 dark:text-neutral-400">Total Training Time</p>
                         <p className="text-2xl font-semibold text-neutral-900 dark:text-white">{formatTime(userActivityLog?.totalTrainingTime || 0)}</p>

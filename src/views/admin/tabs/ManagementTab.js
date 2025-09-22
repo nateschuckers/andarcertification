@@ -15,7 +15,8 @@ import {
     updateDoc,
     deleteDoc,
     writeBatch,
-    getDocs
+    getDocs,
+    query
 } from 'firebase/firestore';
 
 import CollapsibleCard from '../../../components/CollapsibleCard';
@@ -24,14 +25,39 @@ import EditUserModal from './modals/EditUserModal';
 import EditTrackModal from './modals/EditTrackModal';
 import EditCourseModal from './modals/EditCourseModal';
 
+// Confirmation Modal for clearing data
+const ConfirmClearDataModal = ({ user, onConfirm, onCancel }) => {
+    if (!user) return null;
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-xl p-6 w-full max-w-lg">
+                <h2 className="text-xl font-bold text-red-600 dark:text-red-400">Confirm Data Deletion</h2>
+                <p className="text-neutral-600 dark:text-neutral-300 mt-2">
+                    Are you sure you want to delete all course progress and activity logs for <span className="font-bold">{user.name}</span>? This action is permanent and cannot be undone.
+                </p>
+                <div className="flex justify-end space-x-4 mt-6">
+                    <button onClick={onCancel} className="btn-secondary text-white font-bold py-2 px-4 rounded">Cancel</button>
+                    <button onClick={onConfirm} className="btn-danger text-white font-bold py-2 px-4 rounded">Yes, Delete Data</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+ConfirmClearDataModal.propTypes = {
+    user: PropTypes.object,
+    onConfirm: PropTypes.func.isRequired,
+    onCancel: PropTypes.func.isRequired,
+};
+
+
 const ManagementTab = ({ users, courses, tracks }) => {
-    // State for modals
     const [editingUser, setEditingUser] = useState(null);
     const [editingCourse, setEditingCourse] = useState(null);
     const [editingTrack, setEditingTrack] = useState(null);
     const [deletingItem, setDeletingItem] = useState(null);
+    const [clearingUser, setClearingUser] = useState(null);
 
-    // State for controlled forms (Creations)
     const [newUserName, setNewUserName] = useState('');
     const [newUserEmail, setNewUserEmail] = useState('');
     const [newUserPassword, setNewUserPassword] = useState('');
@@ -45,12 +71,10 @@ const ManagementTab = ({ users, courses, tracks }) => {
     const [newTrackIcon, setNewTrackIcon] = useState('fa-star');
     const [newTrackCourses, setNewTrackCourses] = useState([]);
 
-    // State for mass assignment
     const [massAssignUsers, setMassAssignUsers] = useState([]);
     const [assignmentTarget, setAssignmentTarget] = useState('');
     const [assignmentDueDate, setAssignmentDueDate] = useState('');
     
-    // UI feedback
     const [statusMessage, setStatusMessage] = useState({ message: '', type: 'neutral', key: 0 });
 
     useEffect(() => {
@@ -62,78 +86,25 @@ const ManagementTab = ({ users, courses, tracks }) => {
         }
     }, [statusMessage.key, statusMessage.message]);
 
-    // --- Handlers for CRUD operations ---
-
     const handleCreateUser = async (e) => {
         e.preventDefault();
         setStatusMessage({ message: `Creating authentication for ${newUserEmail}...`, type: 'info', key: Date.now() });
-
         const tempAppName = `temp-app-${Date.now()}`;
         const tempApp = initializeApp(mainApp.options, tempAppName);
         const tempAuth = getAuth(tempApp);
-
         try {
             const userCredential = await createUserWithEmailAndPassword(tempAuth, newUserEmail, newUserPassword);
             const newUser = userCredential.user;
-
             await setDoc(doc(db, "users", newUser.uid), {
-                name: newUserName,
-                email: newUserEmail,
-                isAdmin: newUserIsAdmin,
-                trackIds: [],
-                themePreference: 'dark' // Add default theme preference
+                name: newUserName, email: newUserEmail, isAdmin: newUserIsAdmin, trackIds: [], themePreference: 'dark', hasSeenTour: false
             });
             await setDoc(doc(db, "activityLogs", newUser.uid), {
-                logins: 0, lastLogin: null, totalTrainingTime: 0,
-                attempts: 0, passes: 0, fails: 0, passRate: 0
+                logins: 0, lastLogin: null, totalTrainingTime: 0, attempts: 0, passes: 0, fails: 0, passRate: 0
             });
-
             setStatusMessage({ message: `Successfully created user ${newUserName}.`, type: 'success', key: Date.now() });
             setNewUserName(''); setNewUserEmail(''); setNewUserPassword(''); setNewUserIsAdmin(false);
         } catch (error) {
             console.error("Error creating user:", error);
-            setStatusMessage({ message: `Error: ${error.message}`, type: 'error', key: Date.now() });
-        }
-    };
-
-    const handleCreateCourse = async (e) => {
-        e.preventDefault();
-        if (!newCourseTitle) return;
-        try {
-            await addDoc(collection(db, "courses"), {
-                title: `${newCourseTitle} (${newCourseLevel})`,
-                level: Number(newCourseLevel),
-                quizLength: 1,
-                type: 'standard',
-                isArchived: false,
-            });
-            setStatusMessage({ message: 'Course created successfully.', type: 'success', key: Date.now() });
-            setNewCourseTitle('');
-            setNewCourseLevel(101);
-        } catch (error) {
-            console.error("Error creating course:", error);
-            setStatusMessage({ message: `Error: ${error.message}`, type: 'error', key: Date.now() });
-        }
-    };
-    
-    const handleCreateTrack = async (e) => {
-        e.preventDefault();
-        if (!newTrackName) return;
-        try {
-            await addDoc(collection(db, "tracks"), {
-                name: newTrackName,
-                year: Number(newTrackYear),
-                icon: newTrackIcon,
-                requiredCourses: newTrackCourses,
-                isArchived: false,
-            });
-            setStatusMessage({ message: 'Certification Path created successfully.', type: 'success', key: Date.now() });
-            setNewTrackName('');
-            setNewTrackYear(new Date().getFullYear());
-            setNewTrackIcon('fa-star');
-            setNewTrackCourses([]);
-        } catch (error) {
-            console.error("Error creating track:", error);
             setStatusMessage({ message: `Error: ${error.message}`, type: 'error', key: Date.now() });
         }
     };
@@ -151,6 +122,63 @@ const ManagementTab = ({ users, courses, tracks }) => {
         }
     };
     
+    const handleConfirmClearData = async () => {
+        if (!clearingUser) return;
+        setStatusMessage({ message: `Clearing data for ${clearingUser.name}...`, type: 'info', key: Date.now() });
+        try {
+            const batch = writeBatch(db);
+            const userCourseDataRef = collection(db, 'users', clearingUser.id, 'userCourseData');
+            const userCourseDataSnapshot = await getDocs(query(userCourseDataRef));
+            userCourseDataSnapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            const activityLogRef = doc(db, 'activityLogs', clearingUser.id);
+            batch.set(activityLogRef, {
+                attempts: 0, fails: 0, logins: 0, passRate: 0, passes: 0, totalTrainingTime: 0,
+            }, { merge: true });
+            const userRef = doc(db, 'users', clearingUser.id);
+            batch.update(userRef, { trackIds: [] });
+            await batch.commit();
+            setStatusMessage({ message: `Successfully cleared all course data for ${clearingUser.name}.`, type: 'success', key: Date.now() });
+        } catch (error) {
+            console.error("Error clearing user data:", error);
+            setStatusMessage({ message: `Error: ${error.message}`, type: 'error', key: Date.now() });
+        } finally {
+            setClearingUser(null);
+            setEditingUser(null);
+        }
+    };
+
+    const handleCreateCourse = async (e) => {
+        e.preventDefault();
+        if (!newCourseTitle) return;
+        try {
+            await addDoc(collection(db, "courses"), {
+                title: `${newCourseTitle} (${newCourseLevel})`, level: Number(newCourseLevel), quizLength: 1, type: 'standard', isArchived: false,
+            });
+            setStatusMessage({ message: 'Course created successfully.', type: 'success', key: Date.now() });
+            setNewCourseTitle(''); setNewCourseLevel(101);
+        } catch (error) {
+            console.error("Error creating course:", error);
+            setStatusMessage({ message: `Error: ${error.message}`, type: 'error', key: Date.now() });
+        }
+    };
+    
+    const handleCreateTrack = async (e) => {
+        e.preventDefault();
+        if (!newTrackName) return;
+        try {
+            await addDoc(collection(db, "tracks"), {
+                name: newTrackName, year: Number(newTrackYear), icon: newTrackIcon, requiredCourses: newTrackCourses, isArchived: false,
+            });
+            setStatusMessage({ message: 'Certification Path created successfully.', type: 'success', key: Date.now() });
+            setNewTrackName(''); setNewTrackYear(new Date().getFullYear()); setNewTrackIcon('fa-star'); setNewTrackCourses([]);
+        } catch (error) {
+            console.error("Error creating track:", error);
+            setStatusMessage({ message: `Error: ${error.message}`, type: 'error', key: Date.now() });
+        }
+    };
+    
     const handleSaveTrack = async (trackId, formData) => {
         try {
             await updateDoc(doc(db, "tracks", trackId), formData);
@@ -162,7 +190,7 @@ const ManagementTab = ({ users, courses, tracks }) => {
             setEditingTrack(null);
         }
     };
-    
+
     const handleArchiveItem = async (item, type) => {
         try {
             await updateDoc(doc(db, `${type}s`, item.id), { isArchived: !item.isArchived });
@@ -176,14 +204,12 @@ const ManagementTab = ({ users, courses, tracks }) => {
     const handleDeleteItem = async () => {
         if (!deletingItem) return;
         const { type, data } = deletingItem;
-
         try {
             if (type === 'user') {
                 const userCourseDataSnapshot = await getDocs(collection(db, `users/${data.id}/userCourseData`));
                 const batch = writeBatch(db);
                 userCourseDataSnapshot.forEach(doc => batch.delete(doc.ref));
                 await batch.commit();
-
                 await deleteDoc(doc(db, 'users', data.id));
                 await deleteDoc(doc(db, 'activityLogs', data.id));
             } else {
@@ -197,12 +223,9 @@ const ManagementTab = ({ users, courses, tracks }) => {
             setDeletingItem(null);
         }
     };
-    
+
     const handleResetPassword = async (email) => {
-        if (!email) {
-            setStatusMessage({ message: 'User email is not available.', type: 'error', key: Date.now() });
-            return;
-        }
+        if (!email) { setStatusMessage({ message: 'User email is not available.', type: 'error', key: Date.now() }); return; }
         try {
             await sendPasswordResetEmail(auth, email);
             setStatusMessage({ message: `Password reset email sent to ${email}.`, type: 'success', key: Date.now() });
@@ -217,12 +240,10 @@ const ManagementTab = ({ users, courses, tracks }) => {
             setStatusMessage({ message: 'Please select a target, users, and a due date.', type: 'error', key: Date.now() });
             return;
         }
-        
         const batch = writeBatch(db);
         const isTrack = assignmentTarget.startsWith('track_');
         let courseIdsToAssign = [];
         let targetName = '';
-
         if (isTrack) {
             const trackId = assignmentTarget.replace('track_', '');
             const track = tracks.find(t => t.id === trackId);
@@ -236,7 +257,6 @@ const ManagementTab = ({ users, courses, tracks }) => {
             const course = courses.find(c => c.id === courseId);
             if (course) targetName = course.title;
         }
-
         massAssignUsers.forEach(userId => {
             const user = users.find(u => u.id === userId);
             if (isTrack) {
@@ -244,7 +264,6 @@ const ManagementTab = ({ users, courses, tracks }) => {
                 const newTrackIds = [...new Set([...(user.trackIds || []), trackId])];
                 batch.update(doc(db, 'users', userId), { trackIds: newTrackIds });
             }
-            
             courseIdsToAssign.forEach(courseId => {
                 const userCourseRef = doc(db, `users/${userId}/userCourseData`, courseId);
                 batch.set(userCourseRef, {
@@ -252,7 +271,6 @@ const ManagementTab = ({ users, courses, tracks }) => {
                 }, { merge: true });
             });
         });
-
         try {
             await batch.commit();
             setStatusMessage({ message: `Successfully assigned "${targetName}" to ${massAssignUsers.length} user(s).`, type: 'success', key: Date.now() });
@@ -265,18 +283,15 @@ const ManagementTab = ({ users, courses, tracks }) => {
         }
     };
 
-    const handleToggleMassAssignUser = (userId) => {
-        setMassAssignUsers(prev => prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]);
-    };
-     const handleTrackCourseSelection = (courseId) => {
-        setNewTrackCourses(prev => prev.includes(courseId) ? prev.filter(id => id !== courseId) : [...prev, courseId]);
-    };
-    
+    const handleToggleMassAssignUser = (userId) => { setMassAssignUsers(prev => prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]); };
+    const handleTrackCourseSelection = (courseId) => { setNewTrackCourses(prev => prev.includes(courseId) ? prev.filter(id => id !== courseId) : [...prev, courseId]); };
+
     const inputBaseClasses = "w-full bg-neutral-100 dark:bg-neutral-700 p-2 rounded border border-neutral-300 dark:border-neutral-600 text-neutral-900 dark:text-white focus:ring-blue-500 focus:border-blue-500";
     
     return (
         <>
-            {editingUser && <EditUserModal user={editingUser} onSave={handleSaveUser} onCancel={() => setEditingUser(null)} />}
+            {editingUser && <EditUserModal user={editingUser} onSave={handleSaveUser} onCancel={() => setEditingUser(null)} onClearData={setClearingUser} />}
+            {clearingUser && <ConfirmClearDataModal user={clearingUser} onConfirm={handleConfirmClearData} onCancel={() => setClearingUser(null)} />}
             {editingTrack && <EditTrackModal track={editingTrack} courses={courses} onSave={handleSaveTrack} onCancel={() => setEditingTrack(null)} />}
             {editingCourse && <EditCourseModal course={editingCourse} onCancel={() => setEditingCourse(null)} setStatusMessage={setStatusMessage} />}
             {deletingItem && <ConfirmDeleteModal item={{...deletingItem.data, type: deletingItem.type}} onConfirm={handleDeleteItem} onCancel={() => setDeletingItem(null)} />}
@@ -319,7 +334,7 @@ const ManagementTab = ({ users, courses, tracks }) => {
                     </div>
                 </CollapsibleCard>
 
-                <CollapsibleCard title="Manage Courses & Paths">
+                 <CollapsibleCard title="Manage Courses & Paths">
                     <div className="mb-6">
                         <form onSubmit={handleCreateCourse} className="space-y-3 mb-4 p-4 bg-neutral-50 dark:bg-neutral-900/50 rounded-lg">
                             <h4 className="font-semibold text-neutral-800 dark:text-white">Create New Course</h4>
@@ -342,7 +357,7 @@ const ManagementTab = ({ users, courses, tracks }) => {
                     </div>
                      <div className="border-t-2 border-neutral-300 dark:border-neutral-700 pt-6">
                         <form onSubmit={handleCreateTrack} className="space-y-3 mb-4 p-4 bg-neutral-50 dark:bg-neutral-900/50 rounded-lg">
-                            <h4 className="font-semibold text-neutral-800 dark:text-white">Create New Certification Path</h4>
+                           <h4 className="font-semibold text-neutral-800 dark:text-white">Create New Certification Path</h4>
                             <input type="text" placeholder="Path Name" value={newTrackName} onChange={e => setNewTrackName(e.target.value)} required className={inputBaseClasses}/>
                             <div className="grid grid-cols-2 gap-4">
                                 <input type="number" placeholder="Year" value={newTrackYear} onChange={e => setNewTrackYear(e.target.value)} required className={inputBaseClasses}/>
