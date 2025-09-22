@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { db } from '../../firebase/config';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { useCollection } from '../../hooks/useCollection';
+import { useDocument } from '../../hooks/useDocument'; // Import the new hook
 import CourseCard from '../../components/CourseCard';
 import CompletedTrackCard from '../../components/CompletedTrackCard';
 import { formatTime } from '../../utils/helpers';
@@ -10,9 +11,12 @@ import { formatTime } from '../../utils/helpers';
 const UserDashboard = ({ user, onStartCourse }) => {
     const { data: courses, loading: coursesLoading } = useCollection('courses');
     const { data: tracks, loading: tracksLoading } = useCollection('tracks');
-    const { data: users, loading: usersLoading } = useCollection('users');
+    const { data: users, loading: usersLoading } = useCollection('users'); // For leaderboard
     const [userCourseData, setUserCourseData] = useState({});
     const [userCourseDataLoading, setUserCourseDataLoading] = useState(true);
+
+    // Use the new hook to get the specific user's activity log in real-time
+    const { document: userActivityLog, loading: activityLogLoading } = useDocument('activityLogs', user.id);
 
     useEffect(() => {
         if (!user || !user.id) {
@@ -28,7 +32,8 @@ const UserDashboard = ({ user, onStartCourse }) => {
         return () => unsub();
     }, [user]);
 
-    const { data: activityLogs, loading: activityLogsLoading } = useCollection('activityLogs');
+    // This is now only needed for the leaderboard, not the user's personal stats
+    const { data: allActivityLogs } = useCollection('activityLogs');
 
     const userTracksDetails = useMemo(() => {
         if (!user.trackIds || user.trackIds.length === 0 || !tracks.length) return [];
@@ -49,17 +54,15 @@ const UserDashboard = ({ user, onStartCourse }) => {
     const completedTracks = useMemo(() => userTracksDetails.filter(t => t.completionPercent === 100), [userTracksDetails]);
 
      const leaderboardData = useMemo(() => {
-        if (!users.length || !activityLogs.length) return [];
+        if (!users.length || !allActivityLogs.length) return [];
         return users
             .map(u => ({
                 ...u,
-                completedCount: (activityLogs.find(log => log.id === u.id)?.passes || 0)
+                completedCount: (allActivityLogs.find(log => log.id === u.id)?.passes || 0)
             }))
             .sort((a, b) => b.completedCount - a.completedCount)
             .slice(0, 3);
-    }, [users, activityLogs]);
-
-    const userActivityLog = useMemo(() => activityLogs.find(log => log.id === user.id) || {}, [activityLogs, user.id]);
+    }, [users, allActivityLogs]);
 
     const getTrophy = (index) => {
         if (index === 0) return <i className="fa-solid fa-trophy text-yellow-400"></i>;
@@ -68,7 +71,7 @@ const UserDashboard = ({ user, onStartCourse }) => {
         return null;
     }
 
-    if (coursesLoading || tracksLoading || userCourseDataLoading || activityLogsLoading || usersLoading) {
+    if (coursesLoading || tracksLoading || userCourseDataLoading || activityLogLoading || usersLoading) {
         return <div className="p-8 text-center text-neutral-800 dark:text-white">Loading dashboard...</div>;
     }
 
