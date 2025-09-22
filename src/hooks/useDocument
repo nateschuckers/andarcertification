@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { db } from '../firebase/config';
 import { doc, onSnapshot } from 'firebase/firestore';
 
-// FIX: Changed back to a named export to match the project's convention
+// FIX: Changed to a named export to match the project's convention
 export const useDocument = (collectionName, id) => {
     const [document, setDocument] = useState(null);
     const [error, setError] = useState(null);
