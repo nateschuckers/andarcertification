@@ -1,25 +1,23 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { db } from '../../firebase/config';
-import { collection, onSnapshot, doc } from 'firebase/firestore'; // Added doc
-import { useCollection } from '../../hooks/useCollection';
-import CourseCard from '../../components/CourseCard';
-import CompletedTrackCard from '../../components/CompletedTrackCard';
-import { formatTime } from '../../utils/helpers';
+import { db } from '../../firebase/config.js';
+import { collection, onSnapshot, doc } from 'firebase/firestore';
+import { useCollection } from '../../hooks/useCollection.js';
+import CourseCard from '../../components/CourseCard.js';
+import CompletedTrackCard from '../../components/CompletedTrackCard.js';
+import { formatTime } from '../../utils/helpers.js';
 
 const UserDashboard = ({ user, onStartCourse }) => {
     const { data: courses, loading: coursesLoading } = useCollection('courses');
     const { data: tracks, loading: tracksLoading } = useCollection('tracks');
-    const { data: users, loading: usersLoading } = useCollection('users'); // For leaderboard
+    const { data: users, loading: usersLoading } = useCollection('users');
     const [userCourseData, setUserCourseData] = useState({});
     const [userCourseDataLoading, setUserCourseDataLoading] = useState(true);
-
-    // FIX: Replaced useDocument hook with direct Firestore listener
     const [userActivityLog, setUserActivityLog] = useState(null);
     const [activityLogLoading, setActivityLogLoading] = useState(true);
 
     useEffect(() => {
-        if (!user || !user.id) {
+        if (!user?.id) {
             setActivityLogLoading(false);
             return;
         }
@@ -33,7 +31,7 @@ const UserDashboard = ({ user, onStartCourse }) => {
     }, [user]);
 
     useEffect(() => {
-        if (!user || !user.id) {
+        if (!user?.id) {
             setUserCourseDataLoading(false);
             return;
         };
