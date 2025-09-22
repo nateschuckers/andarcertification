@@ -1,0 +1,42 @@
+import { useState, useEffect } from 'react';
+import { db } from '../firebase/config';
+import { doc, onSnapshot } from 'firebase/firestore';
+
+export const useDocument = (collectionName, id) => {
+    const [document, setDocument] = useState(null);
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!id) {
+            setLoading(false);
+            setDocument(null);
+            return;
+        }
+
+        const docRef = doc(db, collectionName, id);
+
+        const unsubscribe = onSnapshot(docRef, (snapshot) => {
+            if (snapshot.exists()) {
+                setDocument({ id: snapshot.id, ...snapshot.data() });
+                setError(null);
+            } else {
+                // You can decide how to handle non-existent docs, e.g., for new users
+                // For this app, we expect an activityLog to be created with the user.
+                setDocument(null);
+                setError(`Document does not exist in collection: ${collectionName}`);
+            }
+            setLoading(false);
+        }, (err) => {
+            console.error(err.message);
+            setError('Failed to get document');
+            setLoading(false);
+        });
+
+        // Unsubscribe on unmount
+        return () => unsubscribe();
+
+    }, [collectionName, id]);
+
+    return { document, error, loading };
+};
