@@ -25,7 +25,7 @@ import EditUserModal from './modals/EditUserModal';
 import EditTrackModal from './modals/EditTrackModal';
 import EditCourseModal from './modals/EditCourseModal';
 
-// Confirmation Modal for clearing data
+// New Confirmation Modal for clearing data
 const ConfirmClearDataModal = ({ user, onConfirm, onCancel }) => {
     if (!user) return null;
     return (
@@ -52,6 +52,7 @@ ConfirmClearDataModal.propTypes = {
 
 
 const ManagementTab = ({ users, courses, tracks }) => {
+    // FIX: Restored all missing state declarations
     const [editingUser, setEditingUser] = useState(null);
     const [editingCourse, setEditingCourse] = useState(null);
     const [editingTrack, setEditingTrack] = useState(null);
@@ -86,6 +87,7 @@ const ManagementTab = ({ users, courses, tracks }) => {
         }
     }, [statusMessage.key, statusMessage.message]);
 
+    // --- Handlers for CRUD operations ---
     const handleCreateUser = async (e) => {
         e.preventDefault();
         setStatusMessage({ message: `Creating authentication for ${newUserEmail}...`, type: 'info', key: Date.now() });
