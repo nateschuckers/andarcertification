@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { db } from '../../firebase/config';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { useCollection } from '../../hooks/useCollection';
-import { useDocument } from '../../hooks/useDocument'; // FIX: Changed to a named import
+import { useDocument } from '../../hooks/useDocument'; // FIX: Ensured this is a named import
 import CourseCard from '../../components/CourseCard';
 import CompletedTrackCard from '../../components/CompletedTrackCard';
 import { formatTime } from '../../utils/helpers';
@@ -15,6 +15,7 @@ const UserDashboard = ({ user, onStartCourse }) => {
     const [userCourseData, setUserCourseData] = useState({});
     const [userCourseDataLoading, setUserCourseDataLoading] = useState(true);
 
+    // Use the new hook to get the specific user's activity log in real-time
     const { document: userActivityLog, loading: activityLogLoading } = useDocument('activityLogs', user.id);
 
     useEffect(() => {
@@ -31,6 +32,7 @@ const UserDashboard = ({ user, onStartCourse }) => {
         return () => unsub();
     }, [user]);
 
+    // This is now only needed for the leaderboard, not the user's personal stats
     const { data: allActivityLogs } = useCollection('activityLogs');
 
     const userTracksDetails = useMemo(() => {
