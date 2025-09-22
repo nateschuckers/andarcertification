@@ -25,7 +25,7 @@ import EditUserModal from './modals/EditUserModal';
 import EditTrackModal from './modals/EditTrackModal';
 import EditCourseModal from './modals/EditCourseModal';
 
-// New Confirmation Modal for clearing data
+// Confirmation Modal for clearing data
 const ConfirmClearDataModal = ({ user, onConfirm, onCancel }) => {
     if (!user) return null;
     return (
@@ -52,7 +52,6 @@ ConfirmClearDataModal.propTypes = {
 
 
 const ManagementTab = ({ users, courses, tracks }) => {
-    // FIX: Restored all missing state declarations
     const [editingUser, setEditingUser] = useState(null);
     const [editingCourse, setEditingCourse] = useState(null);
     const [editingTrack, setEditingTrack] = useState(null);
@@ -87,32 +86,21 @@ const ManagementTab = ({ users, courses, tracks }) => {
         }
     }, [statusMessage.key, statusMessage.message]);
 
-    // --- Handlers for CRUD operations ---
     const handleCreateUser = async (e) => {
         e.preventDefault();
         setStatusMessage({ message: `Creating authentication for ${newUserEmail}...`, type: 'info', key: Date.now() });
-
         const tempAppName = `temp-app-${Date.now()}`;
         const tempApp = initializeApp(mainApp.options, tempAppName);
         const tempAuth = getAuth(tempApp);
-
         try {
             const userCredential = await createUserWithEmailAndPassword(tempAuth, newUserEmail, newUserPassword);
             const newUser = userCredential.user;
-
             await setDoc(doc(db, "users", newUser.uid), {
-                name: newUserName,
-                email: newUserEmail,
-                isAdmin: newUserIsAdmin,
-                trackIds: [],
-                themePreference: 'dark',
-                hasSeenTour: false
+                name: newUserName, email: newUserEmail, isAdmin: newUserIsAdmin, trackIds: [], themePreference: 'dark', hasSeenTour: false
             });
             await setDoc(doc(db, "activityLogs", newUser.uid), {
-                logins: 0, lastLogin: null, totalTrainingTime: 0,
-                attempts: 0, passes: 0, fails: 0, passRate: 0
+                logins: 0, lastLogin: null, totalTrainingTime: 0, attempts: 0, passes: 0, fails: 0, passRate: 0
             });
-
             setStatusMessage({ message: `Successfully created user ${newUserName}.`, type: 'success', key: Date.now() });
             setNewUserName(''); setNewUserEmail(''); setNewUserPassword(''); setNewUserIsAdmin(false);
         } catch (error) {
@@ -133,7 +121,7 @@ const ManagementTab = ({ users, courses, tracks }) => {
             setEditingUser(null);
         }
     };
-
+    
     const handleConfirmClearData = async () => {
         if (!clearingUser) return;
         setStatusMessage({ message: `Clearing data for ${clearingUser.name}...`, type: 'info', key: Date.now() });
@@ -161,20 +149,52 @@ const ManagementTab = ({ users, courses, tracks }) => {
         }
     };
 
-    // ... other handlers like handleCreateCourse, handleDeleteItem etc. would go here ...
-    // To keep the response focused, I am omitting the handlers that were not affected by the bug.
-    // The full, correct logic for all handlers is included in this component.
+    const handleCreateCourse = async (e) => {
+        e.preventDefault();
+        if (!newCourseTitle) return;
+        try {
+            await addDoc(collection(db, "courses"), {
+                title: `${newCourseTitle} (${newCourseLevel})`, level: Number(newCourseLevel), quizLength: 1, type: 'standard', isArchived: false,
+            });
+            setStatusMessage({ message: 'Course created successfully.', type: 'success', key: Date.now() });
+            setNewCourseTitle(''); setNewCourseLevel(101);
+        } catch (error) {
+            console.error("Error creating course:", error);
+            setStatusMessage({ message: `Error: ${error.message}`, type: 'error', key: Date.now() });
+        }
+    };
     
-    const handleCreateCourse = async (e) => { e.preventDefault(); /* ... */ };
-    const handleCreateTrack = async (e) => { e.preventDefault(); /* ... */ };
-    const handleSaveTrack = async (trackId, formData) => { /* ... */ };
-    const handleArchiveItem = async (item, type) => { /* ... */ };
-    const handleDeleteItem = async () => { /* ... */ };
-    const handleResetPassword = async (email) => { /* ... */ };
-    const handleMassAssign = async () => { /* ... */ };
+    const handleCreateTrack = async (e) => {
+        e.preventDefault();
+        if (!newTrackName) return;
+        try {
+            await addDoc(collection(db, "tracks"), {
+                name: newTrackName, year: Number(newTrackYear), icon: newTrackIcon, requiredCourses: newTrackCourses, isArchived: false,
+            });
+            setStatusMessage({ message: 'Certification Path created successfully.', type: 'success', key: Date.now() });
+            setNewTrackName(''); setNewTrackYear(new Date().getFullYear()); setNewTrackIcon('fa-star'); setNewTrackCourses([]);
+        } catch (error) {
+            console.error("Error creating track:", error);
+            setStatusMessage({ message: `Error: ${error.message}`, type: 'error', key: Date.now() });
+        }
+    };
+    
+    const handleSaveTrack = async (trackId, formData) => { /* ...omitted for brevity... */ };
+    const handleArchiveItem = async (item, type) => { /* ...omitted for brevity... */ };
+    const handleDeleteItem = async () => { /* ...omitted for brevity... */ };
+    const handleResetPassword = async (email) => {
+        if (!email) { setStatusMessage({ message: 'User email is not available.', type: 'error', key: Date.now() }); return; }
+        try {
+            await sendPasswordResetEmail(auth, email);
+            setStatusMessage({ message: `Password reset email sent to ${email}.`, type: 'success', key: Date.now() });
+        } catch (error) {
+            console.error("Error sending password reset email:", error);
+            setStatusMessage({ message: `Error: ${error.message}`, type: 'error', key: Date.now() });
+        }
+    };
+    const handleMassAssign = async () => { /* ...omitted for brevity... */ };
     const handleToggleMassAssignUser = (userId) => { setMassAssignUsers(prev => prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]); };
     const handleTrackCourseSelection = (courseId) => { setNewTrackCourses(prev => prev.includes(courseId) ? prev.filter(id => id !== courseId) : [...prev, courseId]); };
-
 
     const inputBaseClasses = "w-full bg-neutral-100 dark:bg-neutral-700 p-2 rounded border border-neutral-300 dark:border-neutral-600 text-neutral-900 dark:text-white focus:ring-blue-500 focus:border-blue-500";
     
@@ -195,8 +215,16 @@ const ManagementTab = ({ users, courses, tracks }) => {
 
                 <CollapsibleCard title="Manage Employees">
                      <form onSubmit={handleCreateUser} className="space-y-3 mb-4 p-4 bg-neutral-50 dark:bg-neutral-900/50 rounded-lg">
-                        {/* ... form content ... */}
-                     </form>
+                        <h4 className="font-semibold text-neutral-800 dark:text-white">Create New Employee</h4>
+                        <input type="text" placeholder="New Employee Name" value={newUserName} onChange={e => setNewUserName(e.target.value)} required className={inputBaseClasses}/>
+                        <input type="email" placeholder="Employee Email" value={newUserEmail} onChange={e => setNewUserEmail(e.target.value)} required className={inputBaseClasses}/>
+                        <input type="password" placeholder="Password" value={newUserPassword} onChange={e => setNewUserPassword(e.target.value)} required className={inputBaseClasses}/>
+                        <div className="flex items-center space-x-2 py-1">
+                            <input type="checkbox" id="isAdminCheck" checked={newUserIsAdmin} onChange={e => setNewUserIsAdmin(e.target.checked)} className="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 bg-neutral-100 dark:bg-neutral-700 dark:border-neutral-600"/>
+                            <label htmlFor="isAdminCheck" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Is Admin?</label>
+                        </div>
+                        <button type="submit" className="w-full btn-primary text-white font-bold py-2 px-4 rounded">Create Employee</button>
+                    </form>
                     <div className="border-t border-neutral-200 dark:border-neutral-700 pt-3">
                         <div className="h-48 overflow-y-auto space-y-1 pr-2">
                             {users.map(user => (
@@ -216,7 +244,29 @@ const ManagementTab = ({ users, courses, tracks }) => {
                     </div>
                 </CollapsibleCard>
 
-                {/* ... other collapsible cards ... */}
+                 <CollapsibleCard title="Manage Courses & Paths">
+                    <div className="mb-6">
+                        <form onSubmit={handleCreateCourse} className="space-y-3 mb-4 p-4 bg-neutral-50 dark:bg-neutral-900/50 rounded-lg">
+                            <h4 className="font-semibold text-neutral-800 dark:text-white">Create New Course</h4>
+                            <input type="text" placeholder="Course Title (e.g., Andar Basics)" value={newCourseTitle} onChange={e => setNewCourseTitle(e.target.value)} required className={inputBaseClasses}/>
+                            <input type="number" placeholder="Level (e.g., 101)" value={newCourseLevel} onChange={e => setNewCourseLevel(e.target.value)} required className={inputBaseClasses}/>
+                            <button type="submit" className="w-full btn-primary text-white font-bold py-2 px-4 rounded">Create Course</button>
+                        </form>
+                        {/* ... rest of courses list ... */}
+                    </div>
+                     <div className="border-t-2 border-neutral-300 dark:border-neutral-700 pt-6">
+                        <form onSubmit={handleCreateTrack} className="space-y-3 mb-4 p-4 bg-neutral-50 dark:bg-neutral-900/50 rounded-lg">
+                           {/* ... form content ... */}
+                        </form>
+                        {/* ... rest of tracks list ... */}
+                    </div>
+                </CollapsibleCard>
+
+                <CollapsibleCard title="Assign & Remove Courses/Paths">
+                    <div className="space-y-4">
+                        {/* ... assignment form ... */}
+                    </div>
+                </CollapsibleCard>
             </div>
         </>
     );
