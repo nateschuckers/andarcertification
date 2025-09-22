@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { db } from 'firebase/config';
+import { db } from '../../../firebase/config';
 import { doc, writeBatch, updateDoc, arrayUnion, setDoc } from 'firebase/firestore';
-import { getCourseStatusInfo } from 'utils/helpers';
+import { getCourseStatusInfo } from '../../../utils/helpers';
 
 // Modal for assigning courses/paths
 const AddCourseOrPathModal = ({ user, courses, tracks, allUserCourseData, onConfirm, onCancel }) => {
