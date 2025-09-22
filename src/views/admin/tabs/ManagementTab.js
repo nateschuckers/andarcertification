@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { db, auth, app as mainApp } from '../../../firebase/config';
+import { db, auth, app as mainApp } from 'firebase/config';
 import { initializeApp } from 'firebase/app';
 import {
     getAuth,
@@ -19,11 +19,11 @@ import {
     query
 } from 'firebase/firestore';
 
-import CollapsibleCard from '../../../components/CollapsibleCard';
-import ConfirmDeleteModal from '../../../components/ConfirmDeleteModal';
-import EditUserModal from './modals/EditUserModal';
-import EditTrackModal from './modals/EditTrackModal';
-import EditCourseModal from './modals/EditCourseModal';
+import CollapsibleCard from 'components/CollapsibleCard';
+import ConfirmDeleteModal from 'components/ConfirmDeleteModal';
+import EditUserModal from 'views/admin/tabs/modals/EditUserModal';
+import EditTrackModal from 'views/admin/tabs/modals/EditTrackModal';
+import EditCourseModal from 'views/admin/tabs/modals/EditCourseModal';
 
 // New Confirmation Modal for clearing data
 const ConfirmClearDataModal = ({ user, onConfirm, onCancel }) => {
@@ -52,7 +52,6 @@ ConfirmClearDataModal.propTypes = {
 
 
 const ManagementTab = ({ users, courses, tracks }) => {
-    // FIX: Restored all missing state declarations
     const [editingUser, setEditingUser] = useState(null);
     const [editingCourse, setEditingCourse] = useState(null);
     const [editingTrack, setEditingTrack] = useState(null);
@@ -77,6 +76,10 @@ const ManagementTab = ({ users, courses, tracks }) => {
     const [assignmentDueDate, setAssignmentDueDate] = useState('');
     
     const [statusMessage, setStatusMessage] = useState({ message: '', type: 'neutral', key: 0 });
+
+    const sortedUsers = useMemo(() => {
+        return [...users].sort((a, b) => a.name.localeCompare(b.name));
+    }, [users]);
 
     useEffect(() => {
         if (statusMessage.message) {
@@ -290,6 +293,19 @@ const ManagementTab = ({ users, courses, tracks }) => {
 
     const inputBaseClasses = "w-full bg-neutral-100 dark:bg-neutral-700 p-2 rounded border border-neutral-300 dark:border-neutral-600 text-neutral-900 dark:text-white focus:ring-blue-500 focus:border-blue-500";
     
+    const ActionButton = ({ onClick, color, children }) => {
+        const colorClasses = {
+            blue: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
+            yellow: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300',
+            red: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
+        };
+        return (
+            <button onClick={onClick} className={`px-2 py-1 text-xs font-medium rounded-full ${colorClasses[color]} hover:opacity-80 transition-opacity`}>
+                {children}
+            </button>
+        );
+    };
+
     return (
         <>
             {editingUser && <EditUserModal user={editingUser} onSave={handleSaveUser} onCancel={() => setEditingUser(null)} onClearData={setClearingUser} />}
@@ -319,16 +335,16 @@ const ManagementTab = ({ users, courses, tracks }) => {
                     </form>
                     <div className="border-t border-neutral-200 dark:border-neutral-700 pt-3">
                         <div className="h-48 overflow-y-auto space-y-1 pr-2">
-                            {users.map(user => (
+                            {sortedUsers.map(user => (
                                 <div key={user.id} className="flex justify-between items-center p-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700">
                                     <div>
                                         <p className="text-sm text-neutral-800 dark:text-neutral-200">{user.name}</p>
                                         <p className="text-xs text-neutral-500 dark:text-neutral-400">{user.email}</p>
                                     </div>
-                                    <div className="flex space-x-2">
-                                        <button onClick={() => handleResetPassword(user.email)} className="text-xs text-yellow-500 hover:underline">Reset Pass</button>
-                                        <button onClick={() => setEditingUser(user)} className="text-xs text-blue-500 hover:underline">Edit</button>
-                                        <button onClick={() => setDeletingItem({ type: 'user', data: user })} className="text-xs text-red-500 hover:underline">Delete</button>
+                                    <div className="flex items-center space-x-2">
+                                        <ActionButton onClick={() => handleResetPassword(user.email)} color="yellow">Password</ActionButton>
+                                        <ActionButton onClick={() => setEditingUser(user)} color="blue">Edit</ActionButton>
+                                        <ActionButton onClick={() => setDeletingItem({ type: 'user', data: user })} color="red">Delete</ActionButton>
                                     </div>
                                 </div>
                             ))}
@@ -336,7 +352,7 @@ const ManagementTab = ({ users, courses, tracks }) => {
                     </div>
                 </CollapsibleCard>
 
-                <CollapsibleCard title="Manage Courses & Paths">
+                 <CollapsibleCard title="Manage Courses & Paths">
                     <div className="mb-6">
                         <form onSubmit={handleCreateCourse} className="space-y-3 mb-4 p-4 bg-neutral-50 dark:bg-neutral-900/50 rounded-lg">
                             <h4 className="font-semibold text-neutral-800 dark:text-white">Create New Course</h4>
@@ -348,10 +364,10 @@ const ManagementTab = ({ users, courses, tracks }) => {
                             {courses.map(course => (
                                 <div key={course.id} className={`flex justify-between items-center p-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700 ${course.isArchived ? 'opacity-50' : ''}`}>
                                     <p className="text-sm text-neutral-800 dark:text-neutral-200">{course.title}</p>
-                                    <div className="flex space-x-2">
-                                        <button onClick={() => setEditingCourse(course)} className="text-xs text-blue-500 hover:underline">Edit</button>
-                                        <button onClick={() => handleArchiveItem(course, 'course')} className="text-xs text-yellow-500 hover:underline">{course.isArchived ? 'Unarchive' : 'Archive'}</button>
-                                        <button onClick={() => setDeletingItem({ type: 'course', data: course })} className="text-xs text-red-500 hover:underline">Delete</button>
+                                    <div className="flex items-center space-x-2">
+                                        <ActionButton onClick={() => setEditingCourse(course)} color="blue">Edit</ActionButton>
+                                        <ActionButton onClick={() => handleArchiveItem(course, 'course')} color="yellow">{course.isArchived ? 'Unarchive' : 'Archive'}</ActionButton>
+                                        <ActionButton onClick={() => setDeletingItem({ type: 'course', data: course })} color="red">Delete</ActionButton>
                                     </div>
                                 </div>
                             ))}
@@ -387,10 +403,10 @@ const ManagementTab = ({ users, courses, tracks }) => {
                             {tracks.map(track => (
                                 <div key={track.id} className={`flex justify-between items-center p-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700 ${track.isArchived ? 'opacity-50' : ''}`}>
                                     <p className="text-sm text-neutral-800 dark:text-neutral-200">{track.name}</p>
-                                    <div className="flex space-x-2">
-                                         <button onClick={() => setEditingTrack(track)} className="text-xs text-blue-500 hover:underline">Edit</button>
-                                         <button onClick={() => handleArchiveItem(track, 'track')} className="text-xs text-yellow-500 hover:underline">{track.isArchived ? 'Unarchive' : 'Archive'}</button>
-                                        <button onClick={() => setDeletingItem({ type: 'track', data: track })} className="text-xs text-red-500 hover:underline">Delete</button>
+                                    <div className="flex items-center space-x-2">
+                                         <ActionButton onClick={() => setEditingTrack(track)} color="blue">Edit</ActionButton>
+                                         <ActionButton onClick={() => handleArchiveItem(track, 'track')} color="yellow">{track.isArchived ? 'Unarchive' : 'Archive'}</ActionButton>
+                                         <ActionButton onClick={() => setDeletingItem({ type: 'track', data: track })} color="red">Delete</ActionButton>
                                     </div>
                                 </div>
                             ))}
@@ -415,7 +431,7 @@ const ManagementTab = ({ users, courses, tracks }) => {
                         <div>
                             <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">2. Select Employees</label>
                             <div className="h-32 overflow-y-auto border border-neutral-300 dark:border-neutral-600 rounded p-2">
-                                {users.map(user => (
+                                {sortedUsers.map(user => (
                                     <div key={user.id} className="flex items-center p-1">
                                         <input type="checkbox" id={`mass-assign-${user.id}`} checked={massAssignUsers.includes(user.id)} onChange={() => handleToggleMassAssignUser(user.id)} className="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 bg-neutral-100 dark:bg-neutral-700 dark:border-neutral-600 mr-2"/>
                                         <label htmlFor={`mass-assign-${user.id}`} className="text-sm text-neutral-800 dark:text-neutral-200">{user.name}</label>
