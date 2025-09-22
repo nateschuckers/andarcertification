@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { db } from '../../../firebase/config';
+import { db } from '../../../firebase/config.js';
 import { doc, writeBatch } from 'firebase/firestore';
-import { getCourseStatusInfo } from '../../../utils/helpers';
+import { getCourseStatusInfo } from '../../../utils/helpers.js';
 
 // Modal for re-issuing courses/paths
 const ReissueModal = ({ item, onConfirm, onCancel }) => {
