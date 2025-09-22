@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { db } from '../firebase/config';
 import { doc, onSnapshot } from 'firebase/firestore';
 
-// FIX: Switched to a default export to resolve the build error.
-const useDocument = (collectionName, id) => {
+// FIX: Changed back to a named export to match the project's convention
+export const useDocument = (collectionName, id) => {
     const [document, setDocument] = useState(null);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -39,6 +39,4 @@ const useDocument = (collectionName, id) => {
 
     return { document, error, loading };
 };
-
-export default useDocument;
 
