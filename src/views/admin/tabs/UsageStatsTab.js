@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { formatTime } from '../../../utils/helpers';
+import { formatTime } from '../../../utils/helpers.js';
 
 // This function now correctly processes Firestore Timestamps from the activity logs.
 const processActivityForChart = (logs) => {
