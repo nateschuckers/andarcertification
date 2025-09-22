@@ -1,0 +1,26 @@
+{
+  "short_name": "Andar Cert",
+  "name": "Andar Certification",
+  "description": "Andar Software's onboarding and learning platform",
+  "icons": [
+    {
+      "src": "andar180.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+	{
+      "src": "andar350.png",
+      "type": "image/png",
+      "sizes": "384x384"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
