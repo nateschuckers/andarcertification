@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { db } from '../../../firebase/config';
+import { db } from '../../firebase/config.js';
 import { collection, onSnapshot, doc, runTransaction, serverTimestamp } from 'firebase/firestore';
-import { shuffleArray } from '../../../utils/helpers';
-import AnswerFeedbackModal from '../../../components/AnswerFeedbackModal';
-import ConfirmExitModal from '../../../components/ConfirmExitModal';
-import CompletionScreen from '../../../components/CompletionScreen';
+import { shuffleArray } from '../../utils/helpers.js';
+import AnswerFeedbackModal from '../../components/AnswerFeedbackModal.js';
+import ConfirmExitModal from '../../components/ConfirmExitModal.js';
+import CompletionScreen from '../../components/CompletionScreen.js';
 
 const PASS_RATE = 0.8; // 80%
 
@@ -45,6 +45,7 @@ const QuestionView = ({ course, user, onBack, trackIcon }) => {
     }, [questions, course.quizLength]);
     
     useEffect(() => {
+        if (!course?.id) return;
         const q = collection(db, `courses/${course.id}/questions`);
         const unsub = onSnapshot(q, (snapshot) => {
             const fetchedQuestions = [];
@@ -58,7 +59,6 @@ const QuestionView = ({ course, user, onBack, trackIcon }) => {
         return () => unsub();
     }, [course.id]);
     
-    // Initialize quiz once questions are loaded
     useEffect(() => {
         if (questions.length > 0) {
             resetQuiz();
@@ -76,7 +76,6 @@ const QuestionView = ({ course, user, onBack, trackIcon }) => {
         return () => window.removeEventListener('popstate', handlePopState);
     }, [showCompletionScreen]);
     
-    // Retry handler now only resets the quiz state
     const handleRetry = () => {
         resetQuiz();
     };
@@ -100,7 +99,6 @@ const QuestionView = ({ course, user, onBack, trackIcon }) => {
             setCurrentQuestionIndex(prev => prev + 1);
             setSelectedAnswer(null);
         } else {
-            // --- Quiz Completion Logic ---
             const quizEndTime = Date.now();
             const trainingDuration = Math.round((quizEndTime - quizStartTime) / 1000);
             const score = userAnswers.filter(a => a.isCorrect).length;
@@ -109,18 +107,14 @@ const QuestionView = ({ course, user, onBack, trackIcon }) => {
             setFinalScore(score);
             setShowCompletionScreen(true);
 
-            // Document references
             const userCourseRef = doc(db, `users/${user.id}/userCourseData`, course.id);
             const activityLogRef = doc(db, 'activityLogs', user.id);
             
             try {
-                // --- Single Atomic Transaction ---
-                // All database updates for this attempt happen here.
                 await runTransaction(db, async (transaction) => {
                     const activityLogDoc = await transaction.get(activityLogRef);
                     const userCourseDoc = await transaction.get(userCourseRef);
                     
-                    // 1. Calculate new values for Activity Log
                     const activityData = activityLogDoc.data() || {};
                     const newTotalTime = (activityData.totalTrainingTime || 0) + trainingDuration;
                     const newPasses = (activityData.passes || 0) + (hasPassed ? 1 : 0);
@@ -128,12 +122,10 @@ const QuestionView = ({ course, user, onBack, trackIcon }) => {
                     const newAttempts = (activityData.attempts || 0) + 1;
                     const newPassRate = Math.round((newPasses / newAttempts) * 100);
 
-                    // 2. Calculate new values for User Course Data
                     const courseData = userCourseDoc.data() || {};
                     const newFailCount = (courseData.failCount || 0) + (hasPassed ? 0 : 1);
                     const newAttemptCount = (courseData.attemptCount || 0) + 1;
                     
-                    // 3. Write all updates to the database
                     transaction.set(activityLogRef, { 
                         totalTrainingTime: newTotalTime, 
                         passes: newPasses, 
