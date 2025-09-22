@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { db } from '../../firebase/config';
+import { db } from '../../../firebase/config';
 import { collection, onSnapshot, doc, runTransaction, serverTimestamp } from 'firebase/firestore';
-import { shuffleArray } from '../../utils/helpers';
-import AnswerFeedbackModal from '../../components/AnswerFeedbackModal';
-import ConfirmExitModal from '../../components/ConfirmExitModal';
-import CompletionScreen from '../../components/CompletionScreen';
+import { shuffleArray } from '../../../utils/helpers';
+import AnswerFeedbackModal from '../../../components/AnswerFeedbackModal';
+import ConfirmExitModal from '../../../components/ConfirmExitModal';
+import CompletionScreen from '../../../components/CompletionScreen';
 
 const PASS_RATE = 0.8; // 80%
 
@@ -44,26 +44,6 @@ const QuestionView = ({ course, user, onBack, trackIcon }) => {
 
     }, [questions, course.quizLength]);
     
-    // As per your suggestion, recordAttempt is now a reusable useCallback
-    const recordAttempt = useCallback(async () => {
-        const userCourseRef = doc(db, `users/${user.id}/userCourseData`, course.id);
-        const activityLogRef = doc(db, 'activityLogs', user.id);
-        try {
-            await runTransaction(db, async (transaction) => {
-                const activityLogDoc = await transaction.get(activityLogRef);
-                const userCourseDoc = await transaction.get(userCourseRef);
-                
-                const newAttempts = (activityLogDoc.data()?.attempts || 0) + 1;
-                transaction.set(activityLogRef, { attempts: newAttempts }, { merge: true });
-
-                const newAttemptCount = (userCourseDoc.data()?.attemptCount || 0) + 1;
-                transaction.set(userCourseRef, { attemptCount: newAttemptCount }, { merge: true });
-            });
-        } catch (e) {
-            console.error("Transaction failed during attempt recording: ", e);
-        }
-    }, [user.id, course.id]);
-
     useEffect(() => {
         const q = collection(db, `courses/${course.id}/questions`);
         const unsub = onSnapshot(q, (snapshot) => {
@@ -78,13 +58,12 @@ const QuestionView = ({ course, user, onBack, trackIcon }) => {
         return () => unsub();
     }, [course.id]);
     
-    // Updated useEffect to use the new reusable recordAttempt function
+    // Initialize quiz once questions are loaded
     useEffect(() => {
-        if (questions.length > 0 && user.id && course.id) {
+        if (questions.length > 0) {
             resetQuiz();
-            recordAttempt();
         }
-    }, [questions, resetQuiz, recordAttempt, user.id, course.id]);
+    }, [questions, resetQuiz]);
 
     useEffect(() => {
         window.history.pushState(null, '');
@@ -97,9 +76,8 @@ const QuestionView = ({ course, user, onBack, trackIcon }) => {
         return () => window.removeEventListener('popstate', handlePopState);
     }, [showCompletionScreen]);
     
-    // New handler for the retry button that calls both functions
+    // Retry handler now only resets the quiz state
     const handleRetry = () => {
-        recordAttempt();
         resetQuiz();
     };
 
@@ -122,6 +100,7 @@ const QuestionView = ({ course, user, onBack, trackIcon }) => {
             setCurrentQuestionIndex(prev => prev + 1);
             setSelectedAnswer(null);
         } else {
+            // --- Quiz Completion Logic ---
             const quizEndTime = Date.now();
             const trainingDuration = Math.round((quizEndTime - quizStartTime) / 1000);
             const score = userAnswers.filter(a => a.isCorrect).length;
@@ -130,32 +109,53 @@ const QuestionView = ({ course, user, onBack, trackIcon }) => {
             setFinalScore(score);
             setShowCompletionScreen(true);
 
+            // Document references
             const userCourseRef = doc(db, `users/${user.id}/userCourseData`, course.id);
             const activityLogRef = doc(db, 'activityLogs', user.id);
             
             try {
+                // --- Single Atomic Transaction ---
+                // All database updates for this attempt happen here.
                 await runTransaction(db, async (transaction) => {
                     const activityLogDoc = await transaction.get(activityLogRef);
-                    const newTotalTime = (activityLogDoc.data()?.totalTrainingTime || 0) + trainingDuration;
-                    const newPasses = (activityLogDoc.data()?.passes || 0) + (hasPassed ? 1 : 0);
-                    const newFails = (activityLogDoc.data()?.fails || 0) + (hasPassed ? 0 : 1);
-                    const totalAttempts = activityLogDoc.data()?.attempts || 1;
-                    const newPassRate = Math.round((newPasses / totalAttempts) * 100);
-                    transaction.set(activityLogRef, { totalTrainingTime: newTotalTime, passes: newPasses, fails: newFails, passRate: newPassRate }, { merge: true });
-                    
                     const userCourseDoc = await transaction.get(userCourseRef);
-                    const newFailCount = (userCourseDoc.data()?.failCount || 0) + (hasPassed ? 0 : 1);
-                    const updateData = { status: hasPassed ? 'completed' : 'failed', completedDate: hasPassed ? serverTimestamp() : null, failCount: newFailCount };
-                    transaction.set(userCourseRef, updateData, { merge: true });
+                    
+                    // 1. Calculate new values for Activity Log
+                    const activityData = activityLogDoc.data() || {};
+                    const newTotalTime = (activityData.totalTrainingTime || 0) + trainingDuration;
+                    const newPasses = (activityData.passes || 0) + (hasPassed ? 1 : 0);
+                    const newFails = (activityData.fails || 0) + (hasPassed ? 0 : 1);
+                    const newAttempts = (activityData.attempts || 0) + 1;
+                    const newPassRate = Math.round((newPasses / newAttempts) * 100);
+
+                    // 2. Calculate new values for User Course Data
+                    const courseData = userCourseDoc.data() || {};
+                    const newFailCount = (courseData.failCount || 0) + (hasPassed ? 0 : 1);
+                    const newAttemptCount = (courseData.attemptCount || 0) + 1;
+                    
+                    // 3. Write all updates to the database
+                    transaction.set(activityLogRef, { 
+                        totalTrainingTime: newTotalTime, 
+                        passes: newPasses, 
+                        fails: newFails, 
+                        attempts: newAttempts,
+                        passRate: newPassRate 
+                    }, { merge: true });
+                    
+                    transaction.set(userCourseRef, { 
+                        status: hasPassed ? 'completed' : 'failed', 
+                        completedDate: hasPassed ? serverTimestamp() : null, 
+                        failCount: newFailCount,
+                        attemptCount: newAttemptCount
+                    }, { merge: true });
                 });
             } catch (e) {
-                console.error("Failed to save quiz results:", e);
+                console.error("Failed to save quiz results in transaction:", e);
             }
         }
     };
     
     if (loading) return <div className="p-8 text-center text-neutral-800 dark:text-white">Loading Questions...</div>;
-    // Pass the new handleRetry function to the CompletionScreen
     if (showCompletionScreen) return <CompletionScreen score={finalScore} totalQuestions={quizQuestions.length} onBack={onBack} onRetry={handleRetry} />;
     if (quizQuestions.length === 0) return <div className="p-8 text-center"><h2 className="text-xl text-neutral-800 dark:text-white">This course has no questions yet.</h2><button onClick={onBack} className="mt-4 btn-secondary text-white font-bold py-2 px-4 rounded">Back to Courses</button></div>;
     if (!currentQuestion) return null;
