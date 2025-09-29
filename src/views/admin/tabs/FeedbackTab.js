@@ -4,8 +4,24 @@ import { useCollection } from '../../../hooks/useCollection';
 import { db } from '../../../firebase/config';
 import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 
+// New component to display each GIF with a preview
+const GifItem = ({ gifUrl, onRemove }) => (
+    <div className="flex items-center text-sm bg-neutral-100 dark:bg-neutral-700/50 p-2 rounded">
+        <img src={gifUrl} alt="GIF Preview" className="w-16 h-10 object-cover rounded mr-3" />
+        <a href={gifUrl} target="_blank" rel="noopener noreferrer" className="flex-grow truncate pr-2 text-blue-500 hover:underline">
+            {gifUrl}
+        </a>
+        <button onClick={onRemove} className="text-red-500 hover:text-red-700 text-xs font-semibold flex-shrink-0">Remove</button>
+    </div>
+);
+
+GifItem.propTypes = {
+    gifUrl: PropTypes.string.isRequired,
+    onRemove: PropTypes.func.isRequired,
+};
+
+
 const FeedbackSection = ({ title, content, type }) => {
-    // FIX: Use separate state for each input field to prevent sharing text
     const [newMessage, setNewMessage] = useState('');
     const [newGifUrl, setNewGifUrl] = useState('');
 
@@ -17,7 +33,7 @@ const FeedbackSection = ({ title, content, type }) => {
             await updateDoc(docRef, {
                 [field]: arrayUnion(value.trim())
             });
-            setValue(''); // Reset the specific input field
+            setValue(''); 
         } catch (error) {
             console.error(`Error adding ${type} ${field}:`, error);
         }
@@ -46,7 +62,6 @@ const FeedbackSection = ({ title, content, type }) => {
                     <div className="space-y-2 h-40 overflow-y-auto pr-2 mb-2">
                         {(content?.messages || []).map((msg, index) => (
                             <div key={index} className="flex justify-between items-center text-sm bg-neutral-100 dark:bg-neutral-700/50 p-2 rounded">
-                                {/* FIX: Added dark mode text color */}
                                 <span className="truncate pr-2 text-neutral-800 dark:text-neutral-200">{msg}</span>
                                 <button onClick={() => handleRemoveItem('messages', msg)} className="text-red-500 hover:text-red-700 text-xs font-semibold">Remove</button>
                             </div>
@@ -54,7 +69,6 @@ const FeedbackSection = ({ title, content, type }) => {
                     </div>
                     <div className="flex space-x-2">
                         <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="New message..." className={inputBaseClasses} />
-                        {/* FIX: Themed button */}
                         <button onClick={() => handleAddItem('messages', newMessage, setNewMessage)} className="btn-primary text-white font-bold px-4 rounded text-sm">Add</button>
                     </div>
                 </div>
@@ -63,15 +77,11 @@ const FeedbackSection = ({ title, content, type }) => {
                     <h4 className="font-semibold text-neutral-800 dark:text-neutral-200 mb-2">GIFs</h4>
                      <div className="space-y-2 h-40 overflow-y-auto pr-2 mb-2">
                         {(content?.gifUrls || []).map((gif, index) => (
-                            <div key={index} className="flex justify-between items-center text-sm bg-neutral-100 dark:bg-neutral-700/50 p-2 rounded">
-                                <a href={gif} target="_blank" rel="noopener noreferrer" className="truncate pr-2 text-blue-500 hover:underline">Link to GIF</a>
-                                <button onClick={() => handleRemoveItem('gifUrls', gif)} className="text-red-500 hover:text-red-700 text-xs font-semibold">Remove</button>
-                            </div>
+                            <GifItem key={index} gifUrl={gif} onRemove={() => handleRemoveItem('gifUrls', gif)} />
                         ))}
                     </div>
                     <div className="flex space-x-2">
                         <input type="url" value={newGifUrl} onChange={(e) => setNewGifUrl(e.target.value)} placeholder="New GIF URL..." className={inputBaseClasses} />
-                         {/* FIX: Themed button */}
                         <button onClick={() => handleAddItem('gifUrls', newGifUrl, setNewGifUrl)} className="btn-primary text-white font-bold px-4 rounded text-sm">Add</button>
                     </div>
                 </div>
@@ -108,4 +118,3 @@ const FeedbackTab = () => {
 };
 
 export default FeedbackTab;
-
