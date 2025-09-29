@@ -46,11 +46,7 @@ const AnswerFeedbackModal = ({ isCorrect, onNext }) => {
                 <div className="bg-neutral-100 dark:bg-neutral-800 p-6 pt-12 rounded-lg shadow-2xl">
                     <img src={gifUrl} alt={isCorrect ? 'Correct' : 'Incorrect'} className="w-full h-48 object-contain rounded-lg mb-4" />
                     <p className={`text-xl font-bold ${textColor} mb-6`}>{message}</p>
-                    <button 
-                        onClick={onNext} 
-                        className="w-full btn-primary text-white font-bold py-3 px-6 rounded-lg shadow-md hover:scale-105 hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300 ease-in-out">
-                        Next Question
-                    </button>
+                    <button onClick={onNext} className="w-full btn-primary hover:scale-105">Next Question</button>
                 </div>
             </div>
         </div>
@@ -63,4 +59,5 @@ AnswerFeedbackModal.propTypes = {
 };
 
 export default AnswerFeedbackModal;
+
 
