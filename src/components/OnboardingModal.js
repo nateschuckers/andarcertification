@@ -53,8 +53,8 @@ const OnboardingModal = ({ user, onClose }) => {
                         ))}
                     </div>
                     <div className="flex space-x-2">
-                           {step > 0 && ( <button onClick={handlePrev} className="btn-secondary">Back</button> )}
-                           <button onClick={handleNext} className="btn-primary">{step === slides.length - 1 ? 'Finish' : 'Next'}</button>
+                        {step > 0 && ( <button onClick={handlePrev} className="btn-secondary">Back</button> )}
+                        <button onClick={handleNext} className="btn-primary">{step === slides.length - 1 ? 'Finish' : 'Next'}</button>
                     </div>
                 </div>
             </div>
@@ -68,4 +68,3 @@ OnboardingModal.propTypes = {
 };
 
 export default OnboardingModal;
-
