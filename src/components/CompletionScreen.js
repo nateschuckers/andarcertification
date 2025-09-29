@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
+import Button from './Button'; // Import the new Button component
 
 const ConfettiAnimation = () => {
     const canvasRef = useRef(null);
@@ -124,11 +125,11 @@ const CompletionScreen = ({ score, totalQuestions, onBack, onRetry }) => {
                 </div>
                 <div className="bg-white dark:bg-neutral-900/50 p-4 flex justify-center space-x-4 rounded-b-lg">
                     {hasPassed ? (
-                        <button onClick={onBack} className="btn-primary text-white font-bold py-3 px-6 rounded-lg w-full">Back to Courses</button>
+                        <Button onClick={onBack} variant="primary" className="w-full">Back to Courses</Button>
                     ) : (
                         <>
-                            <button onClick={onBack} className="btn-secondary w-1/2">Back to Courses</button>
-                            <button onClick={onRetry} className="btn-primary w-1/2">Retry Course</button>
+                            <Button onClick={onBack} variant="secondary" className="w-1/2">Back to Courses</Button>
+                            <Button onClick={onRetry} variant="primary" className="w-1/2">Retry Course</Button>
                         </>
                     )}
                 </div>
@@ -145,5 +146,3 @@ CompletionScreen.propTypes = {
 };
 
 export default CompletionScreen;
-
-
