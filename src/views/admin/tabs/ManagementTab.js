@@ -326,9 +326,9 @@ const ManagementTab = ({ users, courses, tracks }) => {
                                         <p className="text-xs text-neutral-500 dark:text-neutral-400">{user.email}</p>
                                     </div>
                                     <div className="flex items-center space-x-2">
-                                        <button onClick={() => handleResetPassword(user.email)} className="text-xs font-semibold text-white bg-yellow-500 rounded-full px-3 py-1 hover:bg-yellow-600 transition-colors">Password</button>
-                                        <button onClick={() => setEditingUser(user)} className="text-xs font-semibold text-white bg-blue-500 rounded-full px-3 py-1 hover:bg-blue-600 transition-colors">Edit</button>
-                                        <button onClick={() => setDeletingItem({ type: 'user', data: user })} className="text-xs font-semibold text-white bg-red-500 rounded-full px-3 py-1 hover:bg-red-600 transition-colors">Delete</button>
+                                        <button onClick={() => handleResetPassword(user.email)} className="text-xs font-semibold bg-yellow-400/20 text-yellow-500 dark:bg-yellow-500/10 dark:text-yellow-400 rounded-full px-3 py-1 hover:bg-yellow-400/30 dark:hover:bg-yellow-500/20 transition-colors">Password</button>
+                                        <button onClick={() => setEditingUser(user)} className="text-xs font-semibold bg-blue-400/20 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400 rounded-full px-3 py-1 hover:bg-blue-400/30 dark:hover:bg-blue-500/20 transition-colors">Edit</button>
+                                        <button onClick={() => setDeletingItem({ type: 'user', data: user })} className="text-xs font-semibold bg-red-400/20 text-red-500 dark:bg-red-500/10 dark:text-red-400 rounded-full px-3 py-1 hover:bg-red-400/30 dark:hover:bg-red-500/20 transition-colors">Delete</button>
                                     </div>
                                 </div>
                             ))}
@@ -451,3 +451,4 @@ ManagementTab.propTypes = {
 };
 
 export default ManagementTab;
+
