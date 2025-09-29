@@ -54,28 +54,40 @@ MODERN SCROLLBAR STYLING (THEME-AWARE)
 
 /*
 ================================================================================
-CUSTOM BUTTON STYLES (THEME-AWARE)
+CUSTOM BUTTON STYLES (THEME-AWARE WITH GLOW)
 ================================================================================
 */
 @layer components {
   /* Base styles for all custom buttons */
   .btn {
-    @apply font-bold py-2 px-4 rounded-lg transition-all duration-200 ease-in-out shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply font-bold py-2 px-4 rounded-lg transition-all duration-300 ease-in-out focus:outline-none;
   }
 
   /* Primary Action Button (e.g., Next, Confirm, Retry) */
   .btn-primary {
-    @apply btn bg-blue-600 hover:bg-blue-700 text-white;
+    @apply btn border text-neutral-800 dark:text-white;
+    /* Light Theme */
+    @apply bg-white border-neutral-300 shadow-md hover:shadow-lg hover:shadow-blue-500/20;
+    /* Dark Theme */
+    @apply dark:bg-neutral-800 dark:border-blue-500/50 dark:shadow-[0_0_15px_rgba(59,130,246,0.5)] dark:hover:shadow-[0_0_20px_rgba(59,130,246,0.7)];
   }
 
   /* Secondary Action Button (e.g., Cancel, Back) */
   .btn-secondary {
-    @apply btn bg-neutral-200 text-neutral-800 hover:bg-neutral-300; /* Light Theme */
-    @apply dark:bg-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-600; /* Dark Theme */
+    @apply btn border text-neutral-800 dark:text-neutral-200;
+    /* Light Theme */
+    @apply bg-white border-neutral-300 shadow-md hover:shadow-lg hover:shadow-neutral-500/20;
+    /* Dark Theme */
+    @apply dark:bg-neutral-700/50 dark:border-neutral-500/50 dark:hover:bg-neutral-700;
   }
 
   /* Danger Action Button (e.g., Logout, Delete) */
   .btn-danger {
-    @apply btn bg-red-600 hover:bg-red-700 text-white;
+    @apply btn border text-red-600 dark:text-white;
+    /* Light Theme */
+    @apply bg-white border-red-300 shadow-md hover:shadow-lg hover:shadow-red-500/20;
+    /* Dark Theme */
+    @apply dark:bg-red-600/50 dark:border-red-500/50 dark:hover:bg-red-600/80;
   }
 }
+
