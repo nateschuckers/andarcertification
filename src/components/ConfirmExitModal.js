@@ -14,9 +14,16 @@ const ConfirmExitModal = ({ onConfirm, onCancel }) => {
                 <div className="bg-neutral-100 dark:bg-neutral-800 p-6 pt-12 rounded-lg shadow-2xl">
                     <img src={gifUrl} alt="Warning: Are you sure?" className="w-full h-48 object-contain rounded-lg mb-4" />
                     <p className="text-xl font-bold text-yellow-500 mb-6">{message}</p>
-                    <div className="flex space-x-4"> 
-                            <button onClick={onCancel} className="w-full btn-secondary hover:scale-105">Keep going</button>
-                            <button onClick={onConfirm} className="w-full btn-danger hover:scale-105">Exit Course</button>
+                    <div className="flex space-x-4">
+                        <button 
+                            onClick={onCancel} 
+                            className="w-full btn-secondary hover:scale-105">
+                            Keep going
+                        </button>
+                        <button 
+                            onClick={onConfirm} 
+                            className="w-full btn-danger hover:scale-105">
+                            Exit Course
                         </button>
                     </div>
                 </div>
@@ -31,4 +38,3 @@ ConfirmExitModal.propTypes = {
 };
 
 export default ConfirmExitModal;
-
