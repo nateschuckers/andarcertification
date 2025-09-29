@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { db, auth, app as mainApp } from '../../../firebase/config';
 import { initializeApp } from 'firebase/app';
@@ -77,6 +77,12 @@ const ManagementTab = ({ users, courses, tracks }) => {
     const [assignmentDueDate, setAssignmentDueDate] = useState('');
     
     const [statusMessage, setStatusMessage] = useState({ message: '', type: 'neutral', key: 0 });
+
+    // Memoized sorted lists to prevent re-sorting on every render
+    const sortedUsers = useMemo(() => [...users].sort((a, b) => a.name.localeCompare(b.name)), [users]);
+    const sortedCourses = useMemo(() => [...courses].sort((a, b) => a.title.localeCompare(b.title)), [courses]);
+    const sortedTracks = useMemo(() => [...tracks].sort((a, b) => a.name.localeCompare(b.name)), [tracks]);
+
 
     useEffect(() => {
         if (statusMessage.message) {
@@ -298,147 +304,149 @@ const ManagementTab = ({ users, courses, tracks }) => {
             {editingCourse && <EditCourseModal course={editingCourse} onCancel={() => setEditingCourse(null)} setStatusMessage={setStatusMessage} />}
             {deletingItem && <ConfirmDeleteModal item={{...deletingItem.data, type: deletingItem.type}} onConfirm={handleDeleteItem} onCancel={() => setDeletingItem(null)} />}
 
-            <div className="max-w-4xl mx-auto space-y-6">
+            <div className="max-w-7xl mx-auto space-y-6">
                  {statusMessage.message && (
                     <div key={statusMessage.key} className={`text-center p-2 rounded-md text-sm transition-all duration-300 ${statusMessage.type === 'success' ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300' : statusMessage.type === 'error' ? 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300' : 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'}`}>
                         {statusMessage.message}
                     </div>
                 )}
 
-                <CollapsibleCard title="Manage Employees">
-                     <form onSubmit={handleCreateUser} className="space-y-3 mb-4 p-4 bg-neutral-50 dark:bg-neutral-900/50 rounded-lg">
-                        <h4 className="font-semibold text-neutral-800 dark:text-white">Create New Employee</h4>
-                        <input type="text" placeholder="New Employee Name" value={newUserName} onChange={e => setNewUserName(e.target.value)} required className={inputBaseClasses}/>
-                        <input type="email" placeholder="Employee Email" value={newUserEmail} onChange={e => setNewUserEmail(e.target.value)} required className={inputBaseClasses}/>
-                        <input type="password" placeholder="Password" value={newUserPassword} onChange={e => setNewUserPassword(e.target.value)} required className={inputBaseClasses}/>
-                        <div className="flex items-center space-x-2 py-1">
-                            <input type="checkbox" id="isAdminCheck" checked={newUserIsAdmin} onChange={e => setNewUserIsAdmin(e.target.checked)} className="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 bg-neutral-100 dark:bg-neutral-700 dark:border-neutral-600"/>
-                            <label htmlFor="isAdminCheck" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Is Admin?</label>
-                        </div>
-                        <button type="submit" className="w-full btn-primary text-white font-bold py-2 px-4 rounded">Create Employee</button>
-                    </form>
-                    <div className="border-t border-neutral-200 dark:border-neutral-700 pt-3">
-                        <div className="h-48 overflow-y-auto space-y-1 pr-2">
-                            {users.map(user => (
-                                <div key={user.id} className="flex justify-between items-center p-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700">
-                                    <div>
-                                        <p className="text-sm text-neutral-800 dark:text-neutral-200">{user.name}</p>
-                                        <p className="text-xs text-neutral-500 dark:text-neutral-400">{user.email}</p>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <button onClick={() => handleResetPassword(user.email)} className="text-xs font-semibold bg-yellow-400/20 text-yellow-500 dark:bg-yellow-500/10 dark:text-yellow-400 rounded-full px-3 py-1 hover:bg-yellow-400/30 dark:hover:bg-yellow-500/20 transition-colors">Password</button>
-                                        <button onClick={() => setEditingUser(user)} className="text-xs font-semibold bg-blue-400/20 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400 rounded-full px-3 py-1 hover:bg-blue-400/30 dark:hover:bg-blue-500/20 transition-colors">Edit</button>
-                                        <button onClick={() => setDeletingItem({ type: 'user', data: user })} className="text-xs font-semibold bg-red-400/20 text-red-500 dark:bg-red-500/10 dark:text-red-400 rounded-full px-3 py-1 hover:bg-red-400/30 dark:hover:bg-red-500/20 transition-colors">Delete</button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </CollapsibleCard>
-
-                <CollapsibleCard title="Manage Courses & Paths">
-                    <div className="mb-6">
-                        <form onSubmit={handleCreateCourse} className="space-y-3 mb-4 p-4 bg-neutral-50 dark:bg-neutral-900/50 rounded-lg">
-                            <h4 className="font-semibold text-neutral-800 dark:text-white">Create New Course</h4>
-                            <input type="text" placeholder="Course Title (e.g., Andar Basics)" value={newCourseTitle} onChange={e => setNewCourseTitle(e.target.value)} required className={inputBaseClasses}/>
-                            <input type="number" placeholder="Level (e.g., 101)" value={newCourseLevel} onChange={e => setNewCourseLevel(e.target.value)} required className={inputBaseClasses}/>
-                            <button type="submit" className="w-full btn-primary text-white font-bold py-2 px-4 rounded">Create Course</button>
-                        </form>
-                        <div className="border-t border-neutral-200 dark:border-neutral-700 pt-3 h-48 overflow-y-auto space-y-1 pr-2">
-                            {courses.map(course => (
-                                <div key={course.id} className={`flex justify-between items-center p-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700 ${course.isArchived ? 'opacity-50' : ''}`}>
-                                    <p className="text-sm text-neutral-800 dark:text-neutral-200">{course.title}</p>
-                                    <div className="flex space-x-2">
-                                        <button onClick={() => setEditingCourse(course)} className="text-xs text-blue-500 hover:underline">Edit</button>
-                                        <button onClick={() => handleArchiveItem(course, 'course')} className="text-xs text-yellow-500 hover:underline">{course.isArchived ? 'Unarchive' : 'Archive'}</button>
-                                        <button onClick={() => setDeletingItem({ type: 'course', data: course })} className="text-xs text-red-500 hover:underline">Delete</button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                     <div className="border-t-2 border-neutral-300 dark:border-neutral-700 pt-6">
-                        <form onSubmit={handleCreateTrack} className="space-y-3 mb-4 p-4 bg-neutral-50 dark:bg-neutral-900/50 rounded-lg">
-                           <h4 className="font-semibold text-neutral-800 dark:text-white">Create New Certification Path</h4>
-                            <input type="text" placeholder="Path Name" value={newTrackName} onChange={e => setNewTrackName(e.target.value)} required className={inputBaseClasses}/>
-                            <div className="grid grid-cols-2 gap-4">
-                                <input type="number" placeholder="Year" value={newTrackYear} onChange={e => setNewTrackYear(e.target.value)} required className={inputBaseClasses}/>
-                                <div className="flex items-center space-x-2">
-                                    <input type="text" placeholder="Font Awesome Icon (e.g., fa-star)" value={newTrackIcon} onChange={e => setNewTrackIcon(e.target.value)} required className={inputBaseClasses}/>
-                                    <a href="https://fontawesome.com/icons" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline" title="Browse Icons">
-                                        <i className="fa-solid fa-external-link-alt"></i>
-                                    </a>
-                                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <CollapsibleCard title="Manage Employees">
+                        <form onSubmit={handleCreateUser} className="space-y-3 mb-4 p-4 bg-neutral-50 dark:bg-neutral-900/50 rounded-lg">
+                            <h4 className="font-semibold text-neutral-800 dark:text-white">Create New Employee</h4>
+                            <input type="text" placeholder="New Employee Name" value={newUserName} onChange={e => setNewUserName(e.target.value)} required className={inputBaseClasses}/>
+                            <input type="email" placeholder="Employee Email" value={newUserEmail} onChange={e => setNewUserEmail(e.target.value)} required className={inputBaseClasses}/>
+                            <input type="password" placeholder="Password" value={newUserPassword} onChange={e => setNewUserPassword(e.target.value)} required className={inputBaseClasses}/>
+                            <div className="flex items-center space-x-2 py-1">
+                                <input type="checkbox" id="isAdminCheck" checked={newUserIsAdmin} onChange={e => setNewUserIsAdmin(e.target.checked)} className="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 bg-neutral-100 dark:bg-neutral-700 dark:border-neutral-600"/>
+                                <label htmlFor="isAdminCheck" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Is Admin?</label>
                             </div>
-                            <div>
-                                 <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Required Courses</label>
-                                 <div className="h-24 overflow-y-auto border border-neutral-300 dark:border-neutral-600 rounded p-2">
-                                    {courses.filter(c => !c.isArchived).map(course => (
-                                        <div key={course.id} className="flex items-center p-1">
-                                            <input type="checkbox" id={`track-course-${course.id}`} checked={newTrackCourses.includes(course.id)} onChange={() => handleTrackCourseSelection(course.id)} className="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 bg-neutral-100 dark:bg-neutral-700 dark:border-neutral-600 mr-2"/>
-                                            <label htmlFor={`track-course-${course.id}`} className="text-sm text-neutral-800 dark:text-neutral-200">{course.title}</label>
+                            <button type="submit" className="w-full btn-primary text-white font-bold py-2 px-4 rounded">Create Employee</button>
+                        </form>
+                        <div className="border-t border-neutral-200 dark:border-neutral-700 pt-3">
+                            <div className="h-48 overflow-y-auto space-y-1 pr-2">
+                                {sortedUsers.map(user => (
+                                    <div key={user.id} className="flex justify-between items-center p-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700">
+                                        <div>
+                                            <p className="text-sm text-neutral-800 dark:text-neutral-200">{user.name}</p>
+                                            <p className="text-xs text-neutral-500 dark:text-neutral-400">{user.email}</p>
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
-                            <button type="submit" className="w-full btn-primary text-white font-bold py-2 px-4 rounded">Create Path</button>
-                        </form>
-                        <div className="border-t border-neutral-200 dark:border-neutral-700 pt-3 h-48 overflow-y-auto space-y-1 pr-2">
-                            {tracks.map(track => (
-                                <div key={track.id} className={`flex justify-between items-center p-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700 ${track.isArchived ? 'opacity-50' : ''}`}>
-                                    <p className="text-sm text-neutral-800 dark:text-neutral-200">{track.name}</p>
-                                    <div className="flex space-x-2">
-                                         <button onClick={() => setEditingTrack(track)} className="text-xs text-blue-500 hover:underline">Edit</button>
-                                         <button onClick={() => handleArchiveItem(track, 'track')} className="text-xs text-yellow-500 hover:underline">{track.isArchived ? 'Unarchive' : 'Archive'}</button>
-                                        <button onClick={() => setDeletingItem({ type: 'track', data: track })} className="text-xs text-red-500 hover:underline">Delete</button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </CollapsibleCard>
-
-                <CollapsibleCard title="Assign & Remove Courses/Paths">
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">1. Select a Course or Path</label>
-                            <select value={assignmentTarget} onChange={e => setAssignmentTarget(e.target.value)} className={inputBaseClasses}>
-                                <option value="" disabled>Select a target...</option>
-                                <optgroup label="Certification Paths">
-                                    {tracks.filter(t => !t.isArchived).map(t => <option key={t.id} value={`track_${t.id}`}>{t.name}</option>)}
-                                </optgroup>
-                                <optgroup label="Individual Courses">
-                                    {courses.filter(c => !c.isArchived).map(c => <option key={c.id} value={`course_${c.id}`}>{c.title}</option>)}
-                                </optgroup>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">2. Select Employees</label>
-                            <div className="h-32 overflow-y-auto border border-neutral-300 dark:border-neutral-600 rounded p-2">
-                                {users.map(user => (
-                                    <div key={user.id} className="flex items-center p-1">
-                                        <input type="checkbox" id={`mass-assign-${user.id}`} checked={massAssignUsers.includes(user.id)} onChange={() => handleToggleMassAssignUser(user.id)} className="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 bg-neutral-100 dark:bg-neutral-700 dark:border-neutral-600 mr-2"/>
-                                        <label htmlFor={`mass-assign-${user.id}`} className="text-sm text-neutral-800 dark:text-neutral-200">{user.name}</label>
+                                        <div className="flex items-center space-x-2">
+                                            <button onClick={() => handleResetPassword(user.email)} className="text-xs font-semibold bg-yellow-400/20 text-yellow-500 dark:bg-yellow-500/10 dark:text-yellow-400 rounded-full px-3 py-1 hover:bg-yellow-400/30 dark:hover:bg-yellow-500/20 transition-colors">Password</button>
+                                            <button onClick={() => setEditingUser(user)} className="text-xs font-semibold bg-blue-400/20 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400 rounded-full px-3 py-1 hover:bg-blue-400/30 dark:hover:bg-blue-500/20 transition-colors">Edit</button>
+                                            <button onClick={() => setDeletingItem({ type: 'user', data: user })} className="text-xs font-semibold bg-red-400/20 text-red-500 dark:bg-red-500/10 dark:text-red-400 rounded-full px-3 py-1 hover:bg-red-400/30 dark:hover:bg-red-500/20 transition-colors">Delete</button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
-                            <div className="flex space-x-2 mt-2">
-                                <button onClick={() => setMassAssignUsers(users.map(u => u.id))} className="text-xs btn-secondary text-white py-1 px-2 rounded w-full">Select All</button>
-                                <button onClick={() => setMassAssignUsers([])} className="text-xs btn-secondary text-white py-1 px-2 rounded w-full">Unselect All</button>
+                        </div>
+                    </CollapsibleCard>
+
+                    <CollapsibleCard title="Manage Courses & Paths">
+                        <div className="mb-6">
+                            <form onSubmit={handleCreateCourse} className="space-y-3 mb-4 p-4 bg-neutral-50 dark:bg-neutral-900/50 rounded-lg">
+                                <h4 className="font-semibold text-neutral-800 dark:text-white">Create New Course</h4>
+                                <input type="text" placeholder="Course Title (e.g., Andar Basics)" value={newCourseTitle} onChange={e => setNewCourseTitle(e.target.value)} required className={inputBaseClasses}/>
+                                <input type="number" placeholder="Level (e.g., 101)" value={newCourseLevel} onChange={e => setNewCourseLevel(e.target.value)} required className={inputBaseClasses}/>
+                                <button type="submit" className="w-full btn-primary text-white font-bold py-2 px-4 rounded">Create Course</button>
+                            </form>
+                            <div className="border-t border-neutral-200 dark:border-neutral-700 pt-3 h-48 overflow-y-auto space-y-1 pr-2">
+                                {sortedCourses.map(course => (
+                                    <div key={course.id} className={`flex justify-between items-center p-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700 ${course.isArchived ? 'opacity-50' : ''}`}>
+                                        <p className="text-sm text-neutral-800 dark:text-neutral-200">{course.title}</p>
+                                        <div className="flex space-x-2">
+                                            <button onClick={() => setEditingCourse(course)} className="text-xs text-blue-500 hover:underline">Edit</button>
+                                            <button onClick={() => handleArchiveItem(course, 'course')} className="text-xs text-yellow-500 hover:underline">{course.isArchived ? 'Unarchive' : 'Archive'}</button>
+                                            <button onClick={() => setDeletingItem({ type: 'course', data: course })} className="text-xs text-red-500 hover:underline">Delete</button>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">3. Set Due Date (for assignments)</label>
-                            <input type="date" value={assignmentDueDate} onChange={e => setAssignmentDueDate(e.target.value)} className={inputBaseClasses + ' dark:[color-scheme:dark]'} />
+                        <div className="border-t-2 border-neutral-300 dark:border-neutral-700 pt-6">
+                            <form onSubmit={handleCreateTrack} className="space-y-3 mb-4 p-4 bg-neutral-50 dark:bg-neutral-900/50 rounded-lg">
+                            <h4 className="font-semibold text-neutral-800 dark:text-white">Create New Certification Path</h4>
+                                <input type="text" placeholder="Path Name" value={newTrackName} onChange={e => setNewTrackName(e.target.value)} required className={inputBaseClasses}/>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <input type="number" placeholder="Year" value={newTrackYear} onChange={e => setNewTrackYear(e.target.value)} required className={inputBaseClasses}/>
+                                    <div className="flex items-center space-x-2">
+                                        <input type="text" placeholder="Font Awesome Icon (e.g., fa-star)" value={newTrackIcon} onChange={e => setNewTrackIcon(e.target.value)} required className={inputBaseClasses}/>
+                                        <a href="https://fontawesome.com/icons" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline" title="Browse Icons">
+                                            <i className="fa-solid fa-external-link-alt"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Required Courses</label>
+                                    <div className="h-24 overflow-y-auto border border-neutral-300 dark:border-neutral-600 rounded p-2">
+                                        {sortedCourses.filter(c => !c.isArchived).map(course => (
+                                            <div key={course.id} className="flex items-center p-1">
+                                                <input type="checkbox" id={`track-course-${course.id}`} checked={newTrackCourses.includes(course.id)} onChange={() => handleTrackCourseSelection(course.id)} className="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 bg-neutral-100 dark:bg-neutral-700 dark:border-neutral-600 mr-2"/>
+                                                <label htmlFor={`track-course-${course.id}`} className="text-sm text-neutral-800 dark:text-neutral-200">{course.title}</label>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <button type="submit" className="w-full btn-primary text-white font-bold py-2 px-4 rounded">Create Path</button>
+                            </form>
+                            <div className="border-t border-neutral-200 dark:border-neutral-700 pt-3 h-48 overflow-y-auto space-y-1 pr-2">
+                                {sortedTracks.map(track => (
+                                    <div key={track.id} className={`flex justify-between items-center p-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700 ${track.isArchived ? 'opacity-50' : ''}`}>
+                                        <p className="text-sm text-neutral-800 dark:text-neutral-200">{track.name}</p>
+                                        <div className="flex space-x-2">
+                                            <button onClick={() => setEditingTrack(track)} className="text-xs text-blue-500 hover:underline">Edit</button>
+                                            <button onClick={() => handleArchiveItem(track, 'track')} className="text-xs text-yellow-500 hover:underline">{track.isArchived ? 'Unarchive' : 'Archive'}</button>
+                                            <button onClick={() => setDeletingItem({ type: 'track', data: track })} className="text-xs text-red-500 hover:underline">Delete</button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                        <div className="flex space-x-4">
-                            <button onClick={handleMassAssign} className="w-full btn-primary text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 hover:bg-blue-700 transition-colors">
-                                <i className="fa-solid fa-plus"></i>
-                                <span>Assign ({massAssignUsers.length})</span>
-                            </button>
+                    </CollapsibleCard>
+
+                    <CollapsibleCard title="Assign & Remove Courses/Paths">
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">1. Select a Course or Path</label>
+                                <select value={assignmentTarget} onChange={e => setAssignmentTarget(e.target.value)} className={inputBaseClasses}>
+                                    <option value="" disabled>Select a target...</option>
+                                    <optgroup label="Certification Paths">
+                                        {sortedTracks.filter(t => !t.isArchived).map(t => <option key={t.id} value={`track_${t.id}`}>{t.name}</option>)}
+                                    </optgroup>
+                                    <optgroup label="Individual Courses">
+                                        {sortedCourses.filter(c => !c.isArchived).map(c => <option key={c.id} value={`course_${c.id}`}>{c.title}</option>)}
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">2. Select Employees</label>
+                                <div className="h-32 overflow-y-auto border border-neutral-300 dark:border-neutral-600 rounded p-2">
+                                    {sortedUsers.map(user => (
+                                        <div key={user.id} className="flex items-center p-1">
+                                            <input type="checkbox" id={`mass-assign-${user.id}`} checked={massAssignUsers.includes(user.id)} onChange={() => handleToggleMassAssignUser(user.id)} className="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 bg-neutral-100 dark:bg-neutral-700 dark:border-neutral-600 mr-2"/>
+                                            <label htmlFor={`mass-assign-${user.id}`} className="text-sm text-neutral-800 dark:text-neutral-200">{user.name}</label>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="flex space-x-2 mt-2">
+                                    <button onClick={() => setMassAssignUsers(users.map(u => u.id))} className="text-xs btn-secondary text-white py-1 px-2 rounded w-full">Select All</button>
+                                    <button onClick={() => setMassAssignUsers([])} className="text-xs btn-secondary text-white py-1 px-2 rounded w-full">Unselect All</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">3. Set Due Date (for assignments)</label>
+                                <input type="date" value={assignmentDueDate} onChange={e => setAssignmentDueDate(e.target.value)} className={inputBaseClasses + ' dark:[color-scheme:dark]'} />
+                            </div>
+                            <div className="flex space-x-4">
+                                <button onClick={handleMassAssign} className="w-full btn-primary text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 hover:bg-blue-700 transition-colors">
+                                    <i className="fa-solid fa-plus"></i>
+                                    <span>Assign ({massAssignUsers.length})</span>
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                </CollapsibleCard>
+                    </CollapsibleCard>
+                </div>
             </div>
         </>
     );
