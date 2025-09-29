@@ -1,29 +1,81 @@
-/* ... existing styles ... */
+/* Import Tailwind's base, components, and utilities */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* Modern Scrollbar Styling */
-/* Works on Chrome, Edge, and Safari */
+/*
+================================================================================
+MODERN SCROLLBAR STYLING (THEME-AWARE)
+================================================================================
+*/
+:root {
+  --scrollbar-track-color: #f1f1f1; /* Light gray for light theme track */
+  --scrollbar-thumb-color: #a8a8a8; /* Darker gray for light theme thumb */
+  --scrollbar-thumb-hover-color: #7b7b7b; /* Even darker on hover */
+
+  /* For Firefox */
+  scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
+}
+
+.dark {
+  --scrollbar-track-color: #262626; /* neutral-800 */
+  --scrollbar-thumb-color: #525252; /* neutral-600 */
+  --scrollbar-thumb-hover-color: #737373; /* neutral-500 */
+
+  /* For Firefox */
+  scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
+}
+
+/* Works on Webkit browsers (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    background: #262626; /* neutral-800 */
+  background: var(--scrollbar-track-color);
 }
 
 ::-webkit-scrollbar-thumb {
-    background-color: #525252; /* neutral-600 */
-    border-radius: 10px;
-    border: 2px solid #262626; /* neutral-800 */
+  background-color: var(--scrollbar-thumb-color);
+  border-radius: 10px;
+  border: 2px solid var(--scrollbar-track-color);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background-color: #737373; /* neutral-500 */
+  background-color: var(--scrollbar-thumb-hover-color);
 }
 
-/* For Firefox */
+/* Works on Firefox */
 * {
-    scrollbar-width: thin;
-    scrollbar-color: #525252 #262626; /* thumb track */
+  scrollbar-width: thin;
 }
 
+
+/*
+================================================================================
+CUSTOM BUTTON STYLES (THEME-AWARE)
+================================================================================
+*/
+@layer components {
+  /* Base styles for all custom buttons */
+  .btn {
+    @apply font-bold py-2 px-4 rounded-lg transition-all duration-200 ease-in-out shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Primary Action Button (e.g., Next, Confirm, Retry) */
+  .btn-primary {
+    @apply btn bg-blue-600 hover:bg-blue-700 text-white;
+  }
+
+  /* Secondary Action Button (e.g., Cancel, Back) */
+  .btn-secondary {
+    @apply btn bg-neutral-200 text-neutral-800 hover:bg-neutral-300; /* Light Theme */
+    @apply dark:bg-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-600; /* Dark Theme */
+  }
+
+  /* Danger Action Button (e.g., Logout, Delete) */
+  .btn-danger {
+    @apply btn bg-red-600 hover:bg-red-700 text-white;
+  }
+}
