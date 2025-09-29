@@ -32,4 +32,3 @@ ConfirmDeleteModal.propTypes = {
 };
 
 export default ConfirmDeleteModal;
-
