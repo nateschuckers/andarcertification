@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import Button from './Button'; // Import the new Button component
 
 const ConfirmDeleteModal = ({ item, onConfirm, onCancel }) => {
      return (
@@ -13,8 +14,8 @@ const ConfirmDeleteModal = ({ item, onConfirm, onCancel }) => {
                     <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">Note: This will not delete the user's login account from Firebase Authentication. That must be done manually from the Firebase Console for security reasons.</p>
                  }
                 <div className="flex justify-end space-x-4 mt-6">
-                    <button onClick={onCancel} className="btn-secondary">Cancel</button>
-                    <button onClick={onConfirm} className="btn-danger">Delete</button>
+                    <Button onClick={onCancel} variant="secondary">Cancel</Button>
+                    <Button onClick={onConfirm} variant="danger">Delete</Button>
                 </div>
             </div>
         </div>
@@ -32,3 +33,4 @@ ConfirmDeleteModal.propTypes = {
 };
 
 export default ConfirmDeleteModal;
+
