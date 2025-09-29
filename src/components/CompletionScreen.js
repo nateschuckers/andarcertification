@@ -127,8 +127,8 @@ const CompletionScreen = ({ score, totalQuestions, onBack, onRetry }) => {
                         <button onClick={onBack} className="btn-primary text-white font-bold py-3 px-6 rounded-lg w-full">Back to Courses</button>
                     ) : (
                         <>
-                            <button onClick={onBack} className="btn-secondary text-white font-bold py-3 px-6 rounded-lg w-1/2">Back to Courses</button>
-                            <button onClick={onRetry} className="btn-primary text-white font-bold py-3 px-6 rounded-lg w-1/2">Retry Course</button>
+                            <button onClick={onBack} className="btn-secondary w-1/2">Back to Courses</button>
+                            <button onClick={onRetry} className="btn-primary w-1/2">Retry Course</button>
                         </>
                     )}
                 </div>
@@ -145,4 +145,5 @@ CompletionScreen.propTypes = {
 };
 
 export default CompletionScreen;
+
 
