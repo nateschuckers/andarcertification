@@ -13,8 +13,8 @@ const ConfirmDeleteModal = ({ item, onConfirm, onCancel }) => {
                     <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">Note: This will not delete the user's login account from Firebase Authentication. That must be done manually from the Firebase Console for security reasons.</p>
                  }
                 <div className="flex justify-end space-x-4 mt-6">
-                    <button onClick={onCancel} className="btn-secondary text-white font-bold py-2 px-4 rounded">Cancel</button>
-                    <button onClick={onConfirm} className="btn-danger text-white font-bold py-2 px-4 rounded">Delete</button>
+                    <button onClick={onCancel} className="btn-secondary">Cancel</button>
+                    <button onClick={onConfirm} className="btn-danger">Delete</button>
                 </div>
             </div>
         </div>
@@ -32,3 +32,4 @@ ConfirmDeleteModal.propTypes = {
 };
 
 export default ConfirmDeleteModal;
+
