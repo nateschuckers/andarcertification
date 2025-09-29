@@ -56,7 +56,7 @@ const ProfileMenu = ({ user, onLogout, onSwitchView, theme, toggleTheme, current
                         </button>
                     </div>
                     <div className="p-2">
-                        <button onClick={onLogout} className="w-full btn-danger text-white font-bold py-2 px-3 rounded text-sm flex items-center justify-center">
+                        <button onClick={onLogout} className="w-full btn-danger text-sm flex items-center justify-center">
                             <i className="fa fa-right-from-bracket mr-2"></i> Logout
                         </button>
                     </div>
@@ -77,3 +77,4 @@ ProfileMenu.propTypes = {
 };
 
 export default ProfileMenu;
+
