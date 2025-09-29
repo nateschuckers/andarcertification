@@ -24,6 +24,7 @@ import ConfirmDeleteModal from '../../../components/ConfirmDeleteModal';
 import EditUserModal from './modals/EditUserModal';
 import EditTrackModal from './modals/EditTrackModal';
 import EditCourseModal from './modals/EditCourseModal';
+import Button from '../../../components/Button';
 
 // New Confirmation Modal for clearing data
 const ConfirmClearDataModal = ({ user, onConfirm, onCancel }) => {
@@ -36,8 +37,8 @@ const ConfirmClearDataModal = ({ user, onConfirm, onCancel }) => {
                     Are you sure you want to delete all course progress and activity logs for <span className="font-bold">{user.name}</span>? This action is permanent and cannot be undone.
                 </p>
                 <div className="flex justify-end space-x-4 mt-6">
-                    <button onClick={onCancel} className="btn-secondary text-white font-bold py-2 px-4 rounded">Cancel</button>
-                    <button onClick={onConfirm} className="btn-danger text-white font-bold py-2 px-4 rounded">Yes, Delete Data</button>
+                    <Button onClick={onCancel} variant="secondary">Cancel</Button>
+                    <Button onClick={onConfirm} variant="danger">Yes, Delete Data</Button>
                 </div>
             </div>
         </div>
@@ -52,7 +53,6 @@ ConfirmClearDataModal.propTypes = {
 
 
 const ManagementTab = ({ users, courses, tracks }) => {
-    // FIX: Restored all missing state declarations
     const [editingUser, setEditingUser] = useState(null);
     const [editingCourse, setEditingCourse] = useState(null);
     const [editingTrack, setEditingTrack] = useState(null);
@@ -323,7 +323,7 @@ const ManagementTab = ({ users, courses, tracks }) => {
                                     <input type="checkbox" id="isAdminCheck" checked={newUserIsAdmin} onChange={e => setNewUserIsAdmin(e.target.checked)} className="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 bg-neutral-100 dark:bg-neutral-700 dark:border-neutral-600"/>
                                     <label htmlFor="isAdminCheck" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Is Admin?</label>
                                 </div>
-                                <button type="submit" className="w-full btn-primary text-white font-bold py-2 px-4 rounded">Create Employee</button>
+                                <Button type="submit" className="w-full">Create Employee</Button>
                             </form>
                             <div className="border-t border-neutral-200 dark:border-neutral-700 pt-3">
                                 <div className="h-48 overflow-y-auto space-y-1 pr-2">
@@ -368,8 +368,8 @@ const ManagementTab = ({ users, courses, tracks }) => {
                                         ))}
                                     </div>
                                     <div className="flex space-x-2 mt-2">
-                                        <button onClick={() => setMassAssignUsers(users.map(u => u.id))} className="text-xs btn-secondary text-white py-1 px-2 rounded w-full">Select All</button>
-                                        <button onClick={() => setMassAssignUsers([])} className="text-xs btn-secondary text-white py-1 px-2 rounded w-full">Unselect All</button>
+                                        <Button onClick={() => setMassAssignUsers(users.map(u => u.id))} variant="secondary" className="w-full text-xs">Select All</Button>
+                                        <Button onClick={() => setMassAssignUsers([])} variant="secondary" className="w-full text-xs">Unselect All</Button>
                                     </div>
                                 </div>
                                 <div>
@@ -377,10 +377,10 @@ const ManagementTab = ({ users, courses, tracks }) => {
                                     <input type="date" value={assignmentDueDate} onChange={e => setAssignmentDueDate(e.target.value)} className={inputBaseClasses + ' dark:[color-scheme:dark]'} />
                                 </div>
                                 <div className="flex space-x-4">
-                                    <button onClick={handleMassAssign} className="w-full btn-primary text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 hover:bg-blue-700 transition-colors">
+                                    <Button onClick={handleMassAssign} className="w-full flex items-center justify-center space-x-2">
                                         <i className="fa-solid fa-plus"></i>
                                         <span>Assign ({massAssignUsers.length})</span>
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                         </CollapsibleCard>
@@ -392,7 +392,7 @@ const ManagementTab = ({ users, courses, tracks }) => {
                                 <h4 className="font-semibold text-neutral-800 dark:text-white">Create New Course</h4>
                                 <input type="text" placeholder="Course Title (e.g., Andar Basics)" value={newCourseTitle} onChange={e => setNewCourseTitle(e.target.value)} required className={inputBaseClasses}/>
                                 <input type="number" placeholder="Level (e.g., 101)" value={newCourseLevel} onChange={e => setNewCourseLevel(e.target.value)} required className={inputBaseClasses}/>
-                                <button type="submit" className="w-full btn-primary text-white font-bold py-2 px-4 rounded">Create Course</button>
+                                <Button type="submit" className="w-full">Create Course</Button>
                             </form>
                             <div className="border-t border-neutral-200 dark:border-neutral-700 pt-3 h-48 overflow-y-auto space-y-1 pr-2">
                                 {sortedCourses.map(course => (
@@ -431,7 +431,7 @@ const ManagementTab = ({ users, courses, tracks }) => {
                                         ))}
                                     </div>
                                 </div>
-                                <button type="submit" className="w-full btn-primary text-white font-bold py-2 px-4 rounded">Create Path</button>
+                                <Button type="submit" className="w-full">Create Path</Button>
                             </form>
                             <div className="border-t border-neutral-200 dark:border-neutral-700 pt-3 h-48 overflow-y-auto space-y-1 pr-2">
                                 {sortedTracks.map(track => (
