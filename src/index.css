@@ -12,8 +12,6 @@ MODERN SCROLLBAR STYLING (THEME-AWARE)
   --scrollbar-track-color: #f1f1f1; /* Light gray for light theme track */
   --scrollbar-thumb-color: #a8a8a8; /* Darker gray for light theme thumb */
   --scrollbar-thumb-hover-color: #7b7b7b; /* Even darker on hover */
-
-  /* For Firefox */
   scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
 }
 
@@ -21,35 +19,19 @@ MODERN SCROLLBAR STYLING (THEME-AWARE)
   --scrollbar-track-color: #262626; /* neutral-800 */
   --scrollbar-thumb-color: #525252; /* neutral-600 */
   --scrollbar-thumb-hover-color: #737373; /* neutral-500 */
-
-  /* For Firefox */
   scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
 }
 
 /* Works on Webkit browsers (Chrome, Safari, Edge) */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--scrollbar-track-color);
-}
-
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--scrollbar-track-color); }
 ::-webkit-scrollbar-thumb {
   background-color: var(--scrollbar-thumb-color);
   border-radius: 10px;
   border: 2px solid var(--scrollbar-track-color);
 }
-
-::-webkit-scrollbar-thumb:hover {
-  background-color: var(--scrollbar-thumb-hover-color);
-}
-
-/* Works on Firefox */
-* {
-  scrollbar-width: thin;
-}
+::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover-color); }
+* { scrollbar-width: thin; }
 
 
 /*
@@ -58,36 +40,17 @@ CUSTOM BUTTON STYLES (THEME-AWARE WITH GLOW)
 ================================================================================
 */
 @layer components {
-  /* Base styles for all custom buttons */
   .btn {
     @apply font-bold py-2 px-4 rounded-lg transition-all duration-300 ease-in-out focus:outline-none border;
   }
-
-  /* Primary Action Button (e.g., Next, Confirm, Retry) */
   .btn-primary {
-    @apply btn;
-    /* --- Light Theme --- */
-    @apply bg-white border-neutral-300 text-neutral-900 shadow-sm hover:shadow-md hover:shadow-blue-500/30;
-    /* --- Dark Theme --- */
-    @apply dark:bg-neutral-800/60 dark:border-blue-500/50 dark:text-white dark:shadow-[0_0_15px_rgba(59,130,246,0.4)] dark:hover:shadow-[0_0_25px_rgba(59,130,246,0.7)] dark:hover:border-blue-500/90;
+    @apply btn bg-white border-neutral-300 text-neutral-900 shadow-sm hover:shadow-md hover:shadow-blue-500/30 dark:bg-neutral-800/60 dark:border-blue-500/50 dark:text-white dark:shadow-[0_0_15px_rgba(59,130,246,0.4)] dark:hover:shadow-[0_0_25px_rgba(59,130,246,0.7)] dark:hover:border-blue-500/90;
   }
-
-  /* Secondary Action Button (e.g., Cancel, Back) */
   .btn-secondary {
-    @apply btn;
-    /* --- Light Theme --- */
-    @apply bg-white border-neutral-300 text-neutral-800 shadow-sm hover:shadow-md hover:shadow-neutral-500/20;
-    /* --- Dark Theme --- */
-    @apply dark:bg-neutral-700/50 dark:border-neutral-600 dark:text-neutral-200 dark:hover:bg-neutral-700;
+    @apply btn bg-white border-neutral-300 text-neutral-800 shadow-sm hover:shadow-md hover:shadow-neutral-500/20 dark:bg-neutral-700/50 dark:border-neutral-600 dark:text-neutral-200 dark:hover:bg-neutral-700;
   }
-
-  /* Danger Action Button (e.g., Logout, Delete) */
   .btn-danger {
-    @apply btn;
-    /* --- Light Theme --- */
-    @apply bg-white border-red-400 text-red-600 shadow-sm hover:shadow-md hover:shadow-red-500/30;
-    /* --- Dark Theme --- */
-    @apply dark:bg-red-900/20 dark:border-red-500/50 dark:text-red-400 dark:hover:bg-red-800/40 dark:hover:text-white;
+    @apply btn bg-white border-red-400 text-red-600 shadow-sm hover:shadow-md hover:shadow-red-500/30 dark:bg-red-900/20 dark:border-red-500/50 dark:text-red-400 dark:hover:bg-red-800/40 dark:hover:text-white;
   }
 }
 
