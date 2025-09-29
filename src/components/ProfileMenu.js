@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
+import Button from './Button'; // Import the new Button component
 
 const ProfileMenu = ({ user, onLogout, onSwitchView, theme, toggleTheme, currentView, onShowTour }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -56,9 +57,13 @@ const ProfileMenu = ({ user, onLogout, onSwitchView, theme, toggleTheme, current
                         </button>
                     </div>
                     <div className="p-2">
-                        <button onClick={onLogout} className="w-full btn-danger text-sm flex items-center justify-center">
+                        <Button
+                            onClick={onLogout}
+                            variant="danger"
+                            className="w-full text-sm flex items-center justify-center"
+                        >
                             <i className="fa fa-right-from-bracket mr-2"></i> Logout
-                        </button>
+                        </Button>
                     </div>
                 </div>
             )}
@@ -77,3 +82,4 @@ ProfileMenu.propTypes = {
 };
 
 export default ProfileMenu;
+
