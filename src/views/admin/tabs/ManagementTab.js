@@ -313,7 +313,7 @@ const ManagementTab = ({ users, courses, tracks }) => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="flex flex-col space-y-6">
-                        <CollapsibleCard title="Manage Employees">
+                        <CollapsibleCard title="Manage Employees" defaultOpen={true}>
                             <form onSubmit={handleCreateUser} className="space-y-3 mb-4 p-4 bg-neutral-50 dark:bg-neutral-900/50 rounded-lg">
                                 <h4 className="font-semibold text-neutral-800 dark:text-white">Create New Employee</h4>
                                 <input type="text" placeholder="New Employee Name" value={newUserName} onChange={e => setNewUserName(e.target.value)} required className={inputBaseClasses}/>
@@ -343,7 +343,7 @@ const ManagementTab = ({ users, courses, tracks }) => {
                                 </div>
                             </div>
                         </CollapsibleCard>
-                        <CollapsibleCard title="Assign & Remove Courses/Paths">
+                        <CollapsibleCard title="Assign & Remove Courses/Paths" defaultOpen={true}>
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">1. Select a Course or Path</label>
@@ -386,7 +386,7 @@ const ManagementTab = ({ users, courses, tracks }) => {
                         </CollapsibleCard>
                     </div>
 
-                    <CollapsibleCard title="Manage Courses & Paths">
+                    <CollapsibleCard title="Manage Courses & Paths" defaultOpen={true}>
                         <div className="mb-6">
                             <form onSubmit={handleCreateCourse} className="space-y-3 mb-4 p-4 bg-neutral-50 dark:bg-neutral-900/50 rounded-lg">
                                 <h4 className="font-semibold text-neutral-800 dark:text-white">Create New Course</h4>
@@ -398,10 +398,10 @@ const ManagementTab = ({ users, courses, tracks }) => {
                                 {sortedCourses.map(course => (
                                     <div key={course.id} className={`flex justify-between items-center p-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700 ${course.isArchived ? 'opacity-50' : ''}`}>
                                         <p className="text-sm text-neutral-800 dark:text-neutral-200">{course.title}</p>
-                                        <div class="flex items-center space-x-2">
-                                            <button onClick={() => setEditingCourse(course)} class="text-xs font-semibold bg-blue-400/20 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400 rounded-full px-3 py-1 hover:bg-blue-400/30 dark:hover:bg-blue-500/20 transition-colors">Edit</button>
-                                            <button onClick={() => handleArchiveItem(course, 'course')} class="text-xs font-semibold bg-yellow-400/20 text-yellow-500 dark:bg-yellow-500/10 dark:text-yellow-400 rounded-full px-3 py-1 hover:bg-yellow-400/30 dark:hover:bg-yellow-500/20 transition-colors">{course.isArchived ? 'Unarchive' : 'Archive'}</button>
-                                            <button onClick={() => setDeletingItem({ type: 'course', data: course })} class="text-xs font-semibold bg-red-400/20 text-red-500 dark:bg-red-500/10 dark:text-red-400 rounded-full px-3 py-1 hover:bg-red-400/30 dark:hover:bg-red-500/20 transition-colors">Delete</button>
+                                        <div className="flex items-center space-x-2">
+                                            <button onClick={() => setEditingCourse(course)} className="text-xs font-semibold bg-blue-400/20 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400 rounded-full px-3 py-1 hover:bg-blue-400/30 dark:hover:bg-blue-500/20 transition-colors">Edit</button>
+                                            <button onClick={() => handleArchiveItem(course, 'course')} className="text-xs font-semibold bg-yellow-400/20 text-yellow-500 dark:bg-yellow-500/10 dark:text-yellow-400 rounded-full px-3 py-1 hover:bg-yellow-400/30 dark:hover:bg-yellow-500/20 transition-colors">{course.isArchived ? 'Unarchive' : 'Archive'}</button>
+                                            <button onClick={() => setDeletingItem({ type: 'course', data: course })} className="text-xs font-semibold bg-red-400/20 text-red-500 dark:bg-red-500/10 dark:text-red-400 rounded-full px-3 py-1 hover:bg-red-400/30 dark:hover:bg-red-500/20 transition-colors">Delete</button>
                                         </div>
                                     </div>
                                 ))}
@@ -437,10 +437,10 @@ const ManagementTab = ({ users, courses, tracks }) => {
                                 {sortedTracks.map(track => (
                                     <div key={track.id} className={`flex justify-between items-center p-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700 ${track.isArchived ? 'opacity-50' : ''}`}>
                                         <p className="text-sm text-neutral-800 dark:text-neutral-200">{track.name}</p>
-                                        <div class="flex items-center space-x-2">
-                                            <button onClick={() => setEditingTrack(track)} class="text-xs font-semibold bg-blue-400/20 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400 rounded-full px-3 py-1 hover:bg-blue-400/30 dark:hover:bg-blue-500/20 transition-colors">Edit</button>
-                                            <button onClick={() => handleArchiveItem(track, 'track')} class="text-xs font-semibold bg-yellow-400/20 text-yellow-500 dark:bg-yellow-500/10 dark:text-yellow-400 rounded-full px-3 py-1 hover:bg-yellow-400/30 dark:hover:bg-yellow-500/20 transition-colors">{track.isArchived ? 'Unarchive' : 'Archive'}</button>
-                                            <button onClick={() => setDeletingItem({ type: 'track', data: track })} class="text-xs font-semibold bg-red-400/20 text-red-500 dark:bg-red-500/10 dark:text-red-400 rounded-full px-3 py-1 hover:bg-red-400/30 dark:hover:bg-red-500/20 transition-colors">Delete</button>
+                                        <div className="flex items-center space-x-2">
+                                            <button onClick={() => setEditingTrack(track)} className="text-xs font-semibold bg-blue-400/20 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400 rounded-full px-3 py-1 hover:bg-blue-400/30 dark:hover:bg-blue-500/20 transition-colors">Edit</button>
+                                            <button onClick={() => handleArchiveItem(track, 'track')} className="text-xs font-semibold bg-yellow-400/20 text-yellow-500 dark:bg-yellow-500/10 dark:text-yellow-400 rounded-full px-3 py-1 hover:bg-yellow-400/30 dark:hover:bg-yellow-500/20 transition-colors">{track.isArchived ? 'Unarchive' : 'Archive'}</button>
+                                            <button onClick={() => setDeletingItem({ type: 'track', data: track })} className="text-xs font-semibold bg-red-400/20 text-red-500 dark:bg-red-500/10 dark:text-red-400 rounded-full px-3 py-1 hover:bg-red-400/30 dark:hover:bg-red-500/20 transition-colors">Delete</button>
                                         </div>
                                     </div>
                                 ))}
