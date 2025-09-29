@@ -398,10 +398,10 @@ const ManagementTab = ({ users, courses, tracks }) => {
                                 {sortedCourses.map(course => (
                                     <div key={course.id} className={`flex justify-between items-center p-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700 ${course.isArchived ? 'opacity-50' : ''}`}>
                                         <p className="text-sm text-neutral-800 dark:text-neutral-200">{course.title}</p>
-                                        <div className="flex space-x-2">
-                                            <button onClick={() => setEditingCourse(course)} className="text-xs text-blue-500 hover:underline">Edit</button>
-                                            <button onClick={() => handleArchiveItem(course, 'course')} className="text-xs text-yellow-500 hover:underline">{course.isArchived ? 'Unarchive' : 'Archive'}</button>
-                                            <button onClick={() => setDeletingItem({ type: 'course', data: course })} className="text-xs text-red-500 hover:underline">Delete</button>
+                                        <div class="flex items-center space-x-2">
+                                            <button onClick={() => setEditingCourse(course)} class="text-xs font-semibold bg-blue-400/20 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400 rounded-full px-3 py-1 hover:bg-blue-400/30 dark:hover:bg-blue-500/20 transition-colors">Edit</button>
+                                            <button onClick={() => handleArchiveItem(course, 'course')} class="text-xs font-semibold bg-yellow-400/20 text-yellow-500 dark:bg-yellow-500/10 dark:text-yellow-400 rounded-full px-3 py-1 hover:bg-yellow-400/30 dark:hover:bg-yellow-500/20 transition-colors">{course.isArchived ? 'Unarchive' : 'Archive'}</button>
+                                            <button onClick={() => setDeletingItem({ type: 'course', data: course })} class="text-xs font-semibold bg-red-400/20 text-red-500 dark:bg-red-500/10 dark:text-red-400 rounded-full px-3 py-1 hover:bg-red-400/30 dark:hover:bg-red-500/20 transition-colors">Delete</button>
                                         </div>
                                     </div>
                                 ))}
