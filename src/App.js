@@ -16,7 +16,7 @@ function App() {
     const { userData, loading: authLoading } = useAuth();
     const [currentView, setCurrentView] = useState('dashboard');
     const [takingCourseId, setTakingCourseId] = useState(null);
-    const [takingCourseIcon, setTakingCourseIcon] = useState(null); // New state for the icon
+    const [takingCourseIcon, setTakingCourseIcon] = useState(null);
     const [theme, toggleTheme] = useTheme(userData);
     const [showOnboarding, setShowOnboarding] = useState(false);
     const { data: courses, loading: coursesLoading } = useCollection('courses', {
@@ -32,7 +32,6 @@ function App() {
         }
     }, [userData, authLoading]);
     
-    // Updated handler to accept the icon
     const handleStartCourse = (courseId, icon) => {
         setTakingCourseId(courseId);
         setTakingCourseIcon(icon);
@@ -82,7 +81,6 @@ function App() {
 
     const renderMainContent = () => {
         if (courseBeingTaken) {
-            // Pass the icon down to the QuestionView
             return <QuestionView course={courseBeingTaken} user={userData} onBack={handleExitCourse} trackIcon={takingCourseIcon} />;
         }
         if (userData.isAdmin && currentView === 'admin') {
@@ -91,8 +89,10 @@ function App() {
         return <UserDashboard user={userData} onStartCourse={handleStartCourse} />;
     };
 
+    // ***** MAJOR FIX IS HERE *****
+    // Added `className={theme}` to the main container div.
     return ( 
-        <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 transition-colors">
+        <div className={`${theme} min-h-screen bg-neutral-50 dark:bg-neutral-900 transition-colors`}>
             {showOnboarding && <OnboardingModal user={userData} onClose={() => setShowOnboarding(false)} />}
             <div className={showOnboarding ? 'blur-sm' : ''}>
                 <Header 
@@ -117,4 +117,3 @@ function App() {
 };
 
 export default App;
-
