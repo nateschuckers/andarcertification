@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import Button from './Button'; // Import the new Button component
 
 const OnboardingModal = ({ user, onClose }) => {
     const [step, setStep] = useState(0);
@@ -53,8 +54,8 @@ const OnboardingModal = ({ user, onClose }) => {
                         ))}
                     </div>
                     <div className="flex space-x-2">
-                        {step > 0 && ( <button onClick={handlePrev} className="btn-secondary text-white font-bold py-2 px-4 rounded-lg">Back</button> )}
-                        <button onClick={handleNext} className="btn-primary text-white font-bold py-2 px-4 rounded-lg">{step === slides.length - 1 ? 'Finish' : 'Next'}</button>
+                        {step > 0 && ( <Button onClick={handlePrev} variant="secondary">Back</Button> )}
+                        <Button onClick={handleNext} variant="primary">{step === slides.length - 1 ? 'Finish' : 'Next'}</Button>
                     </div>
                 </div>
             </div>
@@ -68,3 +69,4 @@ OnboardingModal.propTypes = {
 };
 
 export default OnboardingModal;
+

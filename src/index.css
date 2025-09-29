@@ -1,29 +1,35 @@
-/* ... existing styles ... */
+/* Import Tailwind's base, components, and utilities */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* Modern Scrollbar Styling */
-/* Works on Chrome, Edge, and Safari */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+/*
+================================================================================
+MODERN SCROLLBAR STYLING (THEME-AWARE)
+================================================================================
+*/
+:root {
+  --scrollbar-track-color: #f1f1f1; /* Light gray for light theme track */
+  --scrollbar-thumb-color: #a8a8a8; /* Darker gray for light theme thumb */
+  --scrollbar-thumb-hover-color: #7b7b7b; /* Even darker on hover */
+  scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
 }
 
-::-webkit-scrollbar-track {
-    background: #262626; /* neutral-800 */
+.dark {
+  --scrollbar-track-color: #262626; /* neutral-800 */
+  --scrollbar-thumb-color: #525252; /* neutral-600 */
+  --scrollbar-thumb-hover-color: #737373; /* neutral-500 */
+  scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
 }
 
+/* Works on Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--scrollbar-track-color); }
 ::-webkit-scrollbar-thumb {
-    background-color: #525252; /* neutral-600 */
-    border-radius: 10px;
-    border: 2px solid #262626; /* neutral-800 */
+  background-color: var(--scrollbar-thumb-color);
+  border-radius: 10px;
+  border: 2px solid var(--scrollbar-track-color);
 }
-
-::-webkit-scrollbar-thumb:hover {
-    background-color: #737373; /* neutral-500 */
-}
-
-/* For Firefox */
-* {
-    scrollbar-width: thin;
-    scrollbar-color: #525252 #262626; /* thumb track */
-}
+::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover-color); }
+* { scrollbar-width: thin; }
 

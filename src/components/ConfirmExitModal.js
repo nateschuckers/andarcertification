@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import Button from './Button'; // Import the new Button component
 
 const ConfirmExitModal = ({ onConfirm, onCancel }) => {
     const gifUrl = "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYzByMThtM2tnMms3NjFqcWY4MnQ4dm5qZ29idHY5ZTIzcjl2czV1biZlcD12MV9naWZzX3NlYXJjaCZjdD1n/pICj6JWqVpm5aapOIS/giphy.gif";
@@ -15,16 +16,18 @@ const ConfirmExitModal = ({ onConfirm, onCancel }) => {
                     <img src={gifUrl} alt="Warning: Are you sure?" className="w-full h-48 object-contain rounded-lg mb-4" />
                     <p className="text-xl font-bold text-yellow-500 mb-6">{message}</p>
                     <div className="flex space-x-4">
-                        <button 
+                        <Button 
                             onClick={onCancel} 
-                            className="w-full btn-secondary text-white font-bold py-3 px-6 rounded-lg shadow-md hover:scale-105 hover:shadow-lg transition-all duration-300 ease-in-out">
+                            variant="secondary"
+                            className="w-full">
                             Keep going
-                        </button>
-                        <button 
+                        </Button>
+                        <Button 
                             onClick={onConfirm} 
-                            className="w-full btn-danger text-white font-bold py-3 px-6 rounded-lg shadow-md hover:scale-105 hover:shadow-lg transition-all duration-300 ease-in-out">
+                            variant="danger"
+                            className="w-full">
                             Exit Course
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -38,3 +41,4 @@ ConfirmExitModal.propTypes = {
 };
 
 export default ConfirmExitModal;
+
